@@ -1,0 +1,22 @@
+#
+# Sample configuration file
+# Empty lines and lines starting with # and ; are ignored.
+# Format: <key> = <value>
+# Syntactic elements (words) can be separated by linear whitepace.
+#
+
+# server.port
+# listening port
+server.port = 8080
+
+# stream.<streamname>
+# if defined then a stream can be started with this name
+streams.first = true
+
+# stream.<streamname>.password
+# determines the password to accept the stream
+streams.first.password = secret
+
+# stream.<streamname>.limit
+# maximum number of clients for this stream
+streams.first.limit = 100

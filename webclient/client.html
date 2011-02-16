@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
+<html lang="hu" xml:lang="hu"> 
+	<head> 
+		<title>stream.m - console</title>
+		<link rel="stylesheet" type="text/css" href="static/general.css" />
+		<link rel="icon" type="image/png" href="static/favicon.png" />
+	</head>
+	<body>
+		<div id="log">log</div>
+		<div id="content-wrap">
+			<div id="content">
+				<div id="content-top">
+					<div id="content-bottom">
+						
+						<div class="screen" id="screen-login">
+							<h1>login</h1>
+							<form>
+								<label><span>stream ID: </span><input id="streamID" type="text"/></label>
+								<label><span>password: </span><input id="password" type="password"/></label>
+								<label><button class="submit" onclick="sendRequest(); return false;"/>enter</button></label>
+							</form>							
+						</div>
+						
+						<div class="screen" id="screen-realtime">
+							<h1>realtime</h1>
+							<p><strong>Bandwidth Usage</strong> in bytes transferred in every 1/10 sec.</p>
+							<div class="graph" id="bandwidth"></div>
+							<p><strong>Current Viewers</strong></p>
+							<div class="graph" id="viewer"></div>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+		</div>
+			
+		<script type="text/javascript" src="static/script.js"></script>
+	</body>
+</html>

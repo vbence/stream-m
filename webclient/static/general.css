@@ -1,0 +1,160 @@
+a img {
+	border: 0;
+}
+
+a {
+	cursor: hand;
+	position: relative;
+}
+
+div {
+	margin: 0;
+	padding: 0;
+}
+
+x {
+	border: 1px dotted red;
+	padding: -1px;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body * {
+	xoverflow: hidden;
+}
+
+table {
+	border-spacing: 0;
+}
+
+ul {
+	list-style: none;
+}
+
+.end {
+	clear: both;
+	float: none;
+	overflow: hidden;
+}
+
+h1, h2, h3, h4, h5 {
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+body {
+	font-family: Tahoma, Arial, sans-serif;
+	color: #333;
+	background: #5b5b5b;
+}
+
+#content-wrap {
+	width: auto;
+	background: #5b5b5b url("back.png") repeat-x;
+}
+
+#content {
+	margin: 0 0 0 0;
+	background: url("content.png") repeat-y;
+}
+
+#content-top {
+	background: url("content-top.png") no-repeat;
+}
+
+#content-bottom {
+	padding: 70px 76px 70px 76px;
+	background: url("content-bottom.png") left bottom no-repeat;
+	width: 608px;
+}
+
+h1 {
+	margin: 20px 10px;
+	height: 46px;
+	line-height: 46px;
+	color: #fff;
+	font-size: 30px;
+	text-shadow: #000 1px 1px 0;
+}
+
+h3 {
+	padding: 10px;
+	line-height: 24px;
+	font-size: 18px;
+}
+
+p {
+	margin: 10px;
+}
+
+label {
+	display: block;
+	padding: 10px 10px 10px 76px;
+	height: 30px;
+	font-size: 18px;
+	line-height: 30px;
+}
+
+label span {
+	width: 132px;
+	text-align: right;
+	display: block;
+	float: left;
+	padding: 0 10px;
+}
+
+input {
+	display: block;
+	float: left;
+	width: 150px;
+	height: 28px;
+	border: 1px solid #aaa;
+	font-size: 18px;
+}
+
+input.submit, button {
+	border: 0;
+	background: url("button.png");
+	color: #fff;
+	height: 36px;
+	width: 138px;
+	cursor: hand;
+	margin-left: 159px;
+	text-shadow: #000 -1px -1px 0;
+	font-size: 18px;
+}
+
+input.submit:hover, button:hover {
+	background: url("button-over.png");
+	color: #333;
+	text-shadow: #fff -1px -1px 0;
+	font-size: 18px;
+}
+
+#bandwidth {
+	height: 320px;
+}
+
+#viewer {
+	height: 160px;
+}
+
+.graph {
+	margin: 10px;
+}
+
+#log {
+	display: none;
+	width: 100%;
+	position: fixed;
+	opacity: .96;
+	height: 30px;
+	line-height: 30px;
+	font-size: 16px;
+	background: #ffa;
+	border-bottom: 1px solid #aa6;
+	padding: 0 10px;
+}
