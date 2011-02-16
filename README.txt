@@ -74,7 +74,7 @@ The release version has the classes in a .jar archive. Befire running the
 server you should edit the sample config file (change password and choose a
 stream name). So you will end up with something like:
 
-java -cp lib/stream.m.jar StreamingServer server.conf
+java -cp lib/stream-m.jar StreamingServer server.conf
 
 
 PUBLISHING ON WINDOWS

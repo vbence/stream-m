@@ -28,7 +28,7 @@
 		<mkdir dir="${dist}/lib"/>
 		
 		<!-- Create JAR file from all the classes -->
-		<jar jarfile="${dist}/lib/stream.m.jar" basedir="${classes}"/>
+		<jar jarfile="${dist}/lib/stream-m.jar" basedir="${classes}"/>
 		
 		<!-- Create ZIP file for the web client -->
 		<zip destfile="${dist}/console.zip" basedir="${webclient}"/>
@@ -41,6 +41,9 @@
 		
 		<!-- Copy README file -->
 		<copy file="README.txt" todir="${dist}"/>
+		
+		<!-- Compress everything to a release ZIP file -->		
+		<zip destfile="${dist}/stream-m-${DSTAMP}.zip" basedir="${dist}"/>
 	</target>
 
 	<target name="clean" description="clean up">
