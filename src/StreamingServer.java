@@ -76,6 +76,9 @@ class StreamingServer {
 		ConsumerResource consume = new ConsumerResource();
 		server.registerResource("/consume", consume);
 
+		SnapshotResource snapshot = new SnapshotResource();
+		server.registerResource("/snapshot", snapshot);
+
 		InfoResource info = new InfoResource();
 		server.registerResource("/info", info);
 		
@@ -201,6 +204,80 @@ class StreamingServer {
 		}
 	}
 
+	class SnapshotResource implements HTTPResource {
+		
+		private final String STR_CONTENT_TYPE = "Content-type";
+		
+		public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
+			// the part of the path after the resource's path
+			int resLength = request.getResourcePath().length();
+			String requestPath = request.getPathName();
+			if (requestPath.length() - resLength <= 1)
+				throw new HTTPException(400, "No Stream ID Specified");
+			
+			// Stream ID
+			String streamID = requestPath.substring(resLength + 1);
+			
+			// is a stream with that Stream ID defined?
+			if (settings.get("streams." + streamID) == null)
+				throw new HTTPException(404, "Stream Not Registered");
+			
+			// getting stream
+			ControlledStream stream = streams.get(streamID);
+			if (stream == null || !stream.running())
+				throw new HTTPException(503, "Stream Not Running");
+			
+			// setting rsponse content-type
+			response.setParameter(STR_CONTENT_TYPE, "image/webp");
+			
+			// getting current fragment
+			MovieFragment fragment = stream.getFragment();
+			
+			// check if there is a fragment available
+			if (fragment == null)
+				throw new HTTPException(404, "No Fragment Found");
+			
+			// check if there is a keyframe available
+			if (fragment.getKeyframeLength() < 0)
+				throw new HTTPException(404, "No Keyframe Found");
+				
+			// RIFF header
+			byte[] header = {'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'E', 'B', 'P', 'V', 'P', '8', ' ', 0, 0, 0, 0};
+			
+			int offset;
+			int num;
+
+			// saving data length
+			offset = 7;
+			num = fragment.getKeyframeLength() + 12;
+			while (num > 0) {
+				header[offset--] = (byte)num;
+				num >>= 8;
+			}
+			
+			// saving payload length
+			offset = 19;
+			num = fragment.getKeyframeLength();
+			while (num > 0) {
+				header[offset--] = (byte)num;
+				num >>= 8;
+			}
+			
+			try {
+				
+				// sending header
+				response.getOutputStream().write(header, 0, header.length);
+				
+				// sending data
+				response.getOutputStream().write(fragment.getData(), fragment.getKeyframeOffset(), fragment.getKeyframeLength());
+			
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			
+		}
+	}
+		
 	class InfoResource implements HTTPResource {
 		
 		private final String STR_CONTENT_TYPE = "Content-type";

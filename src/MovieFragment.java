@@ -97,4 +97,12 @@ class MovieFragment {
 	public int length() {
 		return dataLength;
 	}
+	
+	public int getKeyframeOffset() {
+		return keyframeOffset;
+	}
+	
+	public int getKeyframeLength() {
+		return keyframeLength;
+	}
 }

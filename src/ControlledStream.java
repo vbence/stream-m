@@ -70,7 +70,5 @@ public class ControlledStream extends Stream {
 		// Starting the event dispatcher on a separate thread (it will be
 		// shared thru multiple web clients).
 		dispatcher.start();
-		
-		System.out.println("running");
 	}
 }
