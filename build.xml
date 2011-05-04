@@ -8,6 +8,7 @@
 	<property name="classes" location="classes"/>
 	<property name="dist" location="dist"/>
 	<property name="webclient" location="webclient"/>
+	<property name="debug" value="true"/>
 
 	<target name="init">
 		<!-- Create the time stamp -->
@@ -20,7 +21,7 @@
 	<target name="compile" depends="init" description="compile the source">
 		<!-- Compile the java code from ${src} into ${build} -->
 		<!-- includeantruntime="false" is a workaround for ant 1.8 -->
-		<javac srcdir="${src}" destdir="${classes}" includeantruntime="false"/>
+		<javac srcdir="${src}" destdir="${classes}" debug="${debug}" includeantruntime="false"/>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
