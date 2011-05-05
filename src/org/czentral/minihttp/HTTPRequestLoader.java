@@ -37,7 +37,7 @@ class HTTPRequestLoader implements HTTPRequest {
 	private static final int STATE_GET_VARS_LOADED = 3;
 	private static final int STATE_FULLY_LOADED = 1000000;
 	
-	private static final String CONTENT_TRANSFER_ENCODING = "Content-transfer-encoding";
+	private static final String TRANSFER_ENCODING = "Transfer-encoding";
 	private static final String TRANSFER_ENCODING_CHUNKED = "chunked";
 	
 	// loading state
@@ -142,7 +142,7 @@ class HTTPRequestLoader implements HTTPRequest {
 	 */
 	public String[] getHeaders(String key) {
 		loadRequestHeaders();
-		return requestHeaders.get(key);
+		return requestHeaders.get(key.toUpperCase());
 	}
 	
 	/**
@@ -152,7 +152,7 @@ class HTTPRequestLoader implements HTTPRequest {
 	 */
 	public String getHeader(String key) {
 		loadRequestHeaders();
-		String[] values = requestHeaders.get(key);
+		String[] values = requestHeaders.get(key.toUpperCase());
 		if (values == null)
 			return null;
 		return values[values.length - 1];
@@ -201,8 +201,8 @@ class HTTPRequestLoader implements HTTPRequest {
 		if (bodyStream == null) {
 			loadFully();
 			
-			String contentTransferEncoding = getHeader(CONTENT_TRANSFER_ENCODING);
-			if (contentTransferEncoding != null && contentTransferEncoding.equals(TRANSFER_ENCODING_CHUNKED)) {
+			String transferEncoding = getHeader(TRANSFER_ENCODING);
+			if (transferEncoding != null && transferEncoding.equals(TRANSFER_ENCODING_CHUNKED)) {
 				bodyStream = new ChunkedInputStream(buffer.getData(), buffer.getOffset(), buffer.getLength(), input);
 			} else {
 				bodyStream = input;
@@ -314,7 +314,7 @@ class HTTPRequestLoader implements HTTPRequest {
 					pos++;
 				String value = new String(buffer, pos, lineEnd - pos);
 				
-				requestHeaders.add(key, value);
+				requestHeaders.add(key.toUpperCase(), value);
 				
 				length -= lineEnd - offset + 2;
 				offset = lineEnd + 2;

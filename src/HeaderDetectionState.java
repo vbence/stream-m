@@ -36,7 +36,7 @@ class HeaderDetectionState implements StreamInputState {
 		this.input = input;
 		this.stream = stream;
 	}
-		
+	
 	public int processData(byte[] buffer, int offset, int length) {
 		
 		int startOffset = offset;
@@ -53,7 +53,6 @@ class HeaderDetectionState implements StreamInputState {
 		// if not EBML
 		if (elem.getId() != ID_EBML)
 			throw new RuntimeException("First element is not EBML!");
-		
 		
 		// COPYING: EBML headerBuffer
 		System.arraycopy(buffer, elem.getElementOffset(), headerBuffer, headerLength, elem.getElementSize());

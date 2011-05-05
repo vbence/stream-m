@@ -43,7 +43,10 @@
 		<!-- Copy README file -->
 		<copy file="README.txt" todir="${dist}"/>
 		
-		<!-- Compress everything to a release ZIP file -->		
+		<!-- Delete ZIP file if exists -->
+		<delete file="${dist}/stream-m-${DSTAMP}.zip"/>
+
+		<!-- Compress everything to a release ZIP file -->
 		<zip destfile="${dist}/stream-m-${DSTAMP}.zip" basedir="${dist}"/>
 	</target>
 
