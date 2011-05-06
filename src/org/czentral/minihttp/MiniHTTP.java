@@ -116,7 +116,10 @@ public class MiniHTTP extends Thread {
 				response.reportException(new HTTPException(404, "Not Found"));
 				return;
 			}
-		
+			
+			// load all the request headers before processing
+			request.loadFully();
+			
 			try {
 				resource.serve(request, response);
 			} catch (HTTPException e) {

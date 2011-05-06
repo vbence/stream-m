@@ -48,13 +48,10 @@ public class StreamProcessorFeeder {
 	 */
 	public void feedTo(StreamProcessor processor) {
 		byte[] data = buffer.getData();
-		int offset = buffer.getOffset();
-		int length = buffer.getLength();
 		
 		// processing current payload and signalling the buffer that the processed data can be discarded
-		int bytesProcessed = processor.process(data, offset, length);
+		int bytesProcessed = processor.process(data, buffer.getOffset(), buffer.getLength());
 		buffer.markProcessed(bytesProcessed);
-		length -= bytesProcessed;
 		
 		// is processing finished
 		while (!processor.finished()) {
@@ -64,19 +61,21 @@ public class StreamProcessorFeeder {
 			
 			// reading new data and notifying buffer about the new content
 			try {
-				int red = input.read(data, length, data.length - length);
-				if (red == -1)
+				int length = buffer.getLength();
+				int bytes = input.read(data, length, data.length - length);
+				
+				// no more data to read
+				if (bytes == -1)
 					return;
-				buffer.markAppended(red);
-				length += red;
+				
+				buffer.markAppended(bytes);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 			
 			// processing current payload and signalling the buffer that the processed data can be discarded
-			bytesProcessed = processor.process(data, offset, length);
+			bytesProcessed = processor.process(data, 0, buffer.getLength());
 			buffer.markProcessed(bytesProcessed);
-			length -= bytesProcessed;
 		}
 	}
 }

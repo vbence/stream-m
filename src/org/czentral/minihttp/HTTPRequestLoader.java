@@ -299,33 +299,51 @@ class HTTPRequestLoader implements HTTPRequest {
 		
 		public int process(byte[] buffer, int offset, int length) {
 			int startOffset = offset;
-			int pos;
-	
-			pos = arrayIndexOf(buffer, offset, length, (byte)'\r');
-			while (pos > offset && pos != -1 && pos < offset + length - 1 && buffer[pos + 1] == '\n') {
+			
+			int pos = offset;
+			do {
+				pos = arrayIndexOf(buffer, pos, length - (pos - offset), (byte)'\r');
 				int lineEnd = pos;
 				
-				pos = arrayIndexOf(buffer, offset, lineEnd - offset, (byte)':');
-				if (pos == -1)
-					return 0;
-				String key = new String(buffer, offset, pos - offset);
-				pos++;
-				while (pos < lineEnd - 1 && buffer[pos] == (byte)' ')
-					pos++;
-				String value = new String(buffer, pos, lineEnd - pos);
+				if (pos == offset) {
+					
+					// empty line (end of header)
+					finished = true;
 				
-				requestHeaders.add(key.toUpperCase(), value);
+				} else {
+					
+					// no EOL found or no lookahead possible (not enough bytes buffred)
+					if (pos == -1 || pos > offset + length - 3)
+						break;
+					
+					// CR not followed by LF or next line starts with LWS
+					if (buffer[pos + 1] != '\n' || buffer[pos + 2] == ' ' || buffer[pos + 2] == '\t') {
+						pos++;
+						continue;
+					}
+					
+					// find ':' character
+					if ((pos = arrayIndexOf(buffer, offset, lineEnd - offset, (byte)':')) != -1) {
+						// fond, extracting key-value pair
+						String key = new String(buffer, offset, pos - offset);
+						pos++;
+						String value = new String(buffer, pos, lineEnd - pos);
+						
+						// trimmed and transformed to upper case (header fields are case-insensitive)
+						requestHeaders.add(key.trim().toUpperCase(), value.trim());
+					}
+					
+				}
 				
+				// adjust buffer boundaries and search position
 				length -= lineEnd - offset + 2;
 				offset = lineEnd + 2;
+				pos = offset;
 				
-				pos = arrayIndexOf(buffer, offset, length, (byte)'\r');
-			}
+			} while (!finished);
 			
-			if (pos <= offset)
-				finished = true;
-			
-			return offset - startOffset + 2;
+			// return number of bytes truly processed
+			return offset - startOffset;
 		}
 		
 		public Map<String, String[]> getCompactMap() {

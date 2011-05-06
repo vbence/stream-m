@@ -65,7 +65,7 @@ public class HTTPResponse {
 		PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream));
 		
 		// response code
-		writer.println("HTTP " + responseCode + " " + responseMessage);
+		writer.println("HTTP/1.1 " + responseCode + " " + responseMessage);
 		
 		// parameters
 		Iterator<Map.Entry<String,String>> iterator = parameters.entrySet().iterator();
