@@ -20,7 +20,6 @@
 
 	<target name="compile" depends="init" description="compile the source">
 		<!-- Compile the java code from ${src} into ${build} -->
-		<!-- includeantruntime="false" is a workaround for ant 1.8 -->
 		<javac srcdir="${src}" destdir="${classes}" debug="${debug}" includeantruntime="false"/>
 	</target>
 
@@ -43,11 +42,28 @@
 		<!-- Copy README file -->
 		<copy file="README.txt" todir="${dist}"/>
 		
+	</target>
+	
+	<target name="package" depends="dist" description="generate download package">
+		
 		<!-- Delete ZIP file if exists -->
 		<delete file="${dist}/stream-m-${DSTAMP}.zip"/>
+		
+		<!-- Get SVN revision -->
+		<exec executable="svn" output="${dist}/svn.properties">
+			<arg value="info" />
+		</exec>
+		<property prefix="svn" file="${dist}/svn.properties"/>
+		
+		<!-- SVN info temp file -->
+		<delete file="${dist}/svn.properties"/>
+
+		<!-- Report SVN revision number -->
+		<echo>SVN Revision: ${svn.Revision}</echo>
 
 		<!-- Compress everything to a release ZIP file -->
-		<zip destfile="${dist}/stream-m-${DSTAMP}.zip" basedir="${dist}"/>
+		<zip destfile="${dist}/stream-m-r${svn.Revision}-${DSTAMP}.zip" basedir="${dist}"/>
+		
 	</target>
 
 	<target name="clean" description="clean up">
