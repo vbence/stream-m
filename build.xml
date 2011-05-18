@@ -46,8 +46,10 @@
 	
 	<target name="package" depends="dist" description="generate download package">
 		
-		<!-- Delete ZIP file if exists -->
-		<delete file="${dist}/stream-m-${DSTAMP}.zip"/>
+		<!-- Delete earlier distribution packages if any -->
+		<delete>
+			<fileset dir="${dist}" includes="stream-m-*.zip"/>
+		</delete>
 		
 		<!-- Get SVN revision -->
 		<exec executable="svn" output="${dist}/svn.properties">
