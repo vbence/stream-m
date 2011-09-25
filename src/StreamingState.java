@@ -50,7 +50,10 @@ class StreamingState implements StreamInputState {
 			//System.out.println(elem);
 			
 			// clusters do not need to be fully loaded, so that is an exception
-			if (elem.getEndOffset() > endOffset && elem.getId() != ID_CLUSTER) {
+			/* Note: cluster check was moved to be the first because of the
+			 * possibility of infinite clusters (gstreamer's curlsink?).
+			 */
+			if (elem.getId() != ID_CLUSTER || elem.getEndOffset() > endOffset) {
 				
 				/* The element is not fully loaded: we need more data, so we end
 				 * this processing cycle. The StreamInput will fill the buffer

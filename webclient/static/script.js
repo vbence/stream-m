@@ -17,7 +17,7 @@ var drawRoundRect = function (context, x, y, width, height, radius) {
 	context.arcTo(x, y, x + radius, y, radius);
 	context.closePath();
 	context.fill();
-}
+};
 
 var RealtimeGraph = function (id) {
 	if (typeof(id) == "undefined")
@@ -45,11 +45,11 @@ RealtimeGraph.bufferContext = RealtimeGraph.buffer.getContext("2d");
 
 RealtimeGraph.prototype.getElement = function() {
 	return this.div;
-}
+};
 
 RealtimeGraph.prototype.getContext = function() {
 	return this.context;
-}
+};
 
 RealtimeGraph.prototype._moveGraph = function(pixSize) {
 	//var imageData = this.context.getImageData(pixSize, 0, this.canvas.width, this.canvas.height);
@@ -59,15 +59,15 @@ RealtimeGraph.prototype._moveGraph = function(pixSize) {
 	RealtimeGraph.bufferContext.drawImage(this.canvas, 0, 0);
 	this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	this.context.drawImage(RealtimeGraph.buffer, -pixSize, 0);
-}
+};
 
 RealtimeGraph.getTimeX = function (time) {
 	return Math.floor(RealtimeGraph.graphTime / 100) - Math.floor(time / 100);
-}
+};
 
 RealtimeGraph.actualize = function() {
 	RealtimeGraph.moveToTime(+ new Date() + RealtimeGraph.msDiff);
-}
+};
 
 RealtimeGraph.moveToTime = function(time) {
 	
@@ -79,13 +79,13 @@ RealtimeGraph.moveToTime = function(time) {
 		RealtimeGraph.msDiff = time - new Date();
 		RealtimeGraph._moveGraphs(pixSize);
 	}
-}
+};
 
 RealtimeGraph._moveGraphs = function(pixSize) {
 	var i;
 	for (i=0; i<RealtimeGraph.instances.length; i++)
 		RealtimeGraph.instances[i]._moveGraph(pixSize);
-}
+};
 
 
 
@@ -133,11 +133,11 @@ LevelGraph.prototype.setPoint = function(time, value) {
 	}
 	
 	// canvas lines
-	x += .5;
+	x += 0.5;
 	this.context.strokeStyle = this.style;
 	this.context.beginPath();
-	this.context.moveTo(this.canvas.width - x, this.canvas.height - .5);
-	this.context.lineTo(this.canvas.width - x, this.canvas.height - .5 - (value * this.scaleFactor));
+	this.context.moveTo(this.canvas.width - x, this.canvas.height - 0.5);
+	this.context.lineTo(this.canvas.width - x, this.canvas.height - 0.5 - (value * this.scaleFactor));
 	this.context.stroke();
 	
 	var timeDiff = Math.floor(time / 100) - Math.floor(this.bufferTime / 100);
@@ -160,7 +160,7 @@ LevelGraph.prototype.setPoint = function(time, value) {
 		this.valSum += value;
 		this.valCount++;
 	}
-}
+};
 
 LevelGraph.prototype.rescale = function() {
 	var max = -1;
@@ -179,7 +179,7 @@ LevelGraph.prototype.rescale = function() {
 		this.redraw();
 	}
 	
-}
+};
 
 LevelGraph.prototype.redraw = function() {
 	this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -194,13 +194,13 @@ LevelGraph.prototype.redraw = function() {
 		var value = this.buffer[(this.bufferOffset + i) % this.buffer.length] * this.scaleFactor;
 		if (value != 0) {
 			this.context.beginPath();
-			this.context.moveTo(this.width - 1 - x + i + .5, this.canvas.height - .5);
-			this.context.lineTo(this.width - 1 - x + i + .5, this.canvas.height - .5 - value);
+			this.context.moveTo(this.width - 1 - x + i + 0.5, this.canvas.height - 0.5);
+			this.context.lineTo(this.width - 1 - x + i + 0.5, this.canvas.height - 0.5 - value);
 			this.context.stroke();
 		}
 	}
 	
-}
+};
 
 var ScaleLevelMap = function (id, width, height, style) {
 	LevelGraph.call(this, id, width, height, style);
@@ -288,7 +288,7 @@ ScaleLevelMap.prototype.redraw = function() {
 
 		lineValue += step / 2;
 	}
-}
+};
 
 var StativeLevelGraph = function (id, width, height, style) {
 	ScaleLevelMap.call(this, id, width, height, style);
@@ -298,7 +298,7 @@ var StativeLevelGraph = function (id, width, height, style) {
 	
 	this.lastTime = 0;
 	this.paintTime = 0;
-}
+};
 StativeLevelGraph.prototype = new ScaleLevelMap();
 
 StativeLevelGraph.prototype._rollValue = function(startTime, endTime, value) {
@@ -327,17 +327,17 @@ StativeLevelGraph.prototype._rollValue = function(startTime, endTime, value) {
 		this.bufferTime = endTime;
 		this.bufferOffset = (this.bufferOffset + endDiff) % this.buffer.length;
 	}
-}
+};
 
 StativeLevelGraph.prototype._drawBar = function(timeStart, timeEnd, value) {
 	//return;
 	var paintStart = RealtimeGraph.getTimeX(timeStart);
 	var paintEnd = RealtimeGraph.getTimeX(timeEnd);
 	
-	this.context.fillRect(this.canvas.width - paintStart, this.canvas.height - .5 - this.lastValue * this.scaleFactor, this.canvas.width - 1 - paintEnd, this.canvas.height);	
+	this.context.fillRect(this.canvas.width - paintStart, this.canvas.height - 0.5 - this.lastValue * this.scaleFactor, this.canvas.width - 1 - paintEnd, this.canvas.height);	
 	
 	this.paintTime = timeEnd;
-}
+};
 
 StativeLevelGraph.prototype.setPoint = function(time, value) {
 	
@@ -355,7 +355,7 @@ StativeLevelGraph.prototype.setPoint = function(time, value) {
 
 	ScaleLevelMap.prototype.setPoint.call(this, time, value);
 
-}
+};
 
 StativeLevelGraph.prototype.redraw = function() {
 	ScaleLevelMap.prototype.redraw.call(this);
@@ -365,8 +365,8 @@ StativeLevelGraph.prototype.redraw = function() {
 		this._drawBar(this.paintTime, RealtimeGraph.graphTime - 100, this.lastValue);
 	
 	//var pixSize = RealtimeGraph.getTimeX(this.lastTime);
-	//this.context.fillRect(this.canvas.width - pixSize, this.canvas.height - .5 - this.lastValue * this.scaleFactor, this.canvas.width - 1, this.canvas.height);	
-}
+	//this.context.fillRect(this.canvas.width - pixSize, this.canvas.height - 0.5 - this.lastValue * this.scaleFactor, this.canvas.width - 1, this.canvas.height);	
+};
 
 StativeLevelGraph.prototype._moveGraph = function(pixSize) {
 	ScaleLevelMap.prototype._moveGraph.call(this, pixSize);
@@ -374,10 +374,10 @@ StativeLevelGraph.prototype._moveGraph = function(pixSize) {
 	var paintSize = RealtimeGraph.getTimeX(this.paintTime);
 	if (this.lastTime != 0 && paintSize >= 39) {
 		this.context.fillStyle = this.style;
-		this.context.fillRect(this.canvas.width - paintSize, this.canvas.height - .5 - this.lastValue * this.scaleFactor, this.canvas.width - 1, this.canvas.height);	
+		this.context.fillRect(this.canvas.width - paintSize, this.canvas.height - 0.5 - this.lastValue * this.scaleFactor, this.canvas.width - 1, this.canvas.height);	
 		this.paintTime = RealtimeGraph.graphTime;
 	}
-}
+};
 
 
 var ToggleGraph = function (id, width, height, style) {
@@ -398,7 +398,7 @@ ToggleGraph.prototype._moveGraph = function(pixSize) {
 
 	if (RealtimeGraph.getTimeX(this.lastTime) >= 39)
 		this._refreshBars();
-}
+};
 
 ToggleGraph.prototype._refreshBars = function() {
 	var pixSize = RealtimeGraph.getTimeX(this.lastTime);
@@ -410,7 +410,7 @@ ToggleGraph.prototype._refreshBars = function() {
 		this.context.clearRect(this.canvas.width - pixSize, 0, this.canvas.width - 1, this.canvas.height);
 	}
 	this.lastTime = RealtimeGraph.graphTime;
-}
+};
 
 ToggleGraph.prototype.setPoint = function(time, value) {
 	var x = RealtimeGraph.getTimeX(time);
@@ -428,7 +428,7 @@ ToggleGraph.prototype.setPoint = function(time, value) {
 		this.context.clearRect(this.canvas.width - x, 0, this.canvas.width, this.canvas.height);
 	}
 	this.lastTime = RealtimeGraph.graphTime;
-}
+};
 
 var showScreen = function(name, className) {
 	var elem = document.getElementById("screen-" + name);
@@ -439,7 +439,7 @@ var showScreen = function(name, className) {
 		if (divs[i].className == className)
 			divs[i].style.display = "none";
 	elem.style.display = "block";
-}
+};
 
 var backGraph;
 var inputGraph;
@@ -487,6 +487,36 @@ function boot() {
 	timeRefresh();
 	
 	showScreen("login", "screen");
+}
+
+function calculateGraph(arr) {
+	var i;
+	maxTime = -1;
+	for (i=0; i<arr.length; i++) {
+		maxTime = Math.max(maxTime, arr[i].time);
+	}
+	
+	//RealtimeGraph.moveToTime(maxTime);
+	
+	/*
+	var msTime = +new Date();
+	
+	maxTime = Math.floor(maxTime / 100) * 100;
+	
+	if (maxTime > graphTime) {
+		var pixSize = Math.floor((maxTime - graphTime) / 100);
+		moveGraph(pixSize);
+		graphTime = maxTime;
+		msDiff = maxTime - msTime;
+	}
+	*/
+}
+
+function processPacket(arr) {
+	var i;
+	calculateGraph(arr);
+	for (i=0; i<arr.length; i++)
+		processEvent(arr[i]);
 }
 
 function sendRequest() {
@@ -551,36 +581,6 @@ function sendRequest() {
 pendingRequest = null;
 
 boot();
-
-function processPacket(arr) {
-	var i;
-	calculateGraph(arr);
-	for (i=0; i<arr.length; i++)
-		processEvent(arr[i]);
-}
-
-function calculateGraph(arr) {
-	var i;
-	maxTime = -1;
-	for (i=0; i<arr.length; i++) {
-		maxTime = Math.max(maxTime, arr[i].time);
-	}
-	
-	//RealtimeGraph.moveToTime(maxTime);
-	
-	/*
-	var msTime = +new Date();
-	
-	maxTime = Math.floor(maxTime / 100) * 100;
-	
-	if (maxTime > graphTime) {
-		var pixSize = Math.floor((maxTime - graphTime) / 100);
-		moveGraph(pixSize);
-		graphTime = maxTime;
-		msDiff = maxTime - msTime;
-	}
-	*/
-}
 
 function processEvent(event) {
 	
@@ -680,7 +680,7 @@ function log(text) {
 
 
 function getTimeX(time) {
-	return Math.round((graphTime - time) / 100) + .5;
+	return Math.round((graphTime - time) / 100) + 0.5;
 }
 
 function moveGraph(x) {
@@ -721,7 +721,7 @@ function btnClick() {
 	
 	var step;
 	if (base < 2.5) {
-		step = .5 * exp;
+		step = 0.5 * exp;
 	} else if (base < 5) {
 		step = exp;
 	} else {
