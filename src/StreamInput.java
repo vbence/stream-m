@@ -57,14 +57,14 @@ class StreamInput {
 				long transferStart = new Date().getTime();
 				
 				// reading data
-				int red = input.read(buffer, offset, buffer.length - offset);
+				int numBytes = input.read(buffer, offset, buffer.length - offset);
 				
 				// notification about the transfer
-				stream.postEvent(new TransferEvent(this, stream, TransferEvent.STREAM_INPUT, red, new Date().getTime() - transferStart));
+				stream.postEvent(new TransferEvent(this, stream, TransferEvent.STREAM_INPUT, numBytes, new Date().getTime() - transferStart));
 
-				if (red == -1)
+				if (numBytes == -1)
 					runs = false;
-				length += red;
+				length += numBytes;
 				
 				int newOffset = currentState.processData(buffer, 0, length);
 				if (newOffset < offset + length) {

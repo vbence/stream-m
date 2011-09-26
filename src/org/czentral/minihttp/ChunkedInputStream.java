@@ -37,7 +37,7 @@ public class ChunkedInputStream extends InputStream {
 	private int chunkLength;
 	
 	/**
-	 * Constructs an object with a buffer of previously red data and an
+	 * Constructs an object with a buffer of previously read data and an
 	 * InputStream to read the rest of the data from.
 	 */
 	public ChunkedInputStream(byte[] data, int offset, int length, InputStream is) {
@@ -68,10 +68,10 @@ public class ChunkedInputStream extends InputStream {
 			while (headLength == -1) {
 				// chunk header not fully loaded
 				// ToDo: make space in the buffer if needed
-				int red = input.read(buffer, bufferOffset + bufferLength, CHUNK_HEAD_MAX_SIZE);
-				if (red == -1)
+				int numBytes = input.read(buffer, bufferOffset + bufferLength, CHUNK_HEAD_MAX_SIZE);
+				if (numBytes == -1)
 					return -1;
-				bufferLength += red;
+				bufferLength += numBytes;
 				
 				headLength = refreshChunkSize(buffer, bufferOffset, bufferLength);
 			}
@@ -98,9 +98,9 @@ public class ChunkedInputStream extends InputStream {
 			
 			// no data buffered
 			int segLength = Math.min(chunkLength, length);
-			int red = input.read(data, offset, segLength);
-			chunkLength -= red;
-			return red;
+			int numBytes = input.read(data, offset, segLength);
+			chunkLength -= numBytes;
+			return numBytes;
 		}
 	}
 	

@@ -205,7 +205,7 @@ class HTTPRequestLoader implements HTTPRequest {
 			if (transferEncoding != null && transferEncoding.equals(TRANSFER_ENCODING_CHUNKED)) {
 				bodyStream = new ChunkedInputStream(buffer.getData(), buffer.getOffset(), buffer.getLength(), input);
 			} else {
-				bodyStream = input;
+				bodyStream = new PrependedInputStream(buffer.getData(), buffer.getOffset(), buffer.getLength(), input);
 			}
 		}
 		return bodyStream;
