@@ -138,7 +138,15 @@ class StreamingState implements StreamInputState {
 				// end: ID_SIMPLEBLOCK
 			
 			} else if (elem.getId() == ID_BLOCKGROUP) {
+				
+				// BlockGroup element is not supported
 				throw new RuntimeException("BlockGroup is not yet supported.");
+			
+			} else {
+				
+				// report unhandled element
+				//DEBUG System.out.println(elem);
+				
 			}
 			
 			if (elem.getId() == ID_CLUSTER || elem.getDataSize() >= 0x100000000L) {
