@@ -21,6 +21,7 @@ class StreamingState implements StreamInputState {
 	
 	private static final long ID_CLUSTER = 0x1F43B675;
 	private static final long ID_SIMPLEBLOCK = 0xA3;
+	private static final long ID_BLOCKGROUP = 0xA0;
 	private static final long ID_TIMECODE = 0xE7;
 	
 	private static final long MINIMAL_FRAGMENT_LENGTH = 100 * 1024;
@@ -87,19 +88,20 @@ class StreamingState implements StreamInputState {
 					throw new RuntimeException("Track numbers > 127 are not implemented.");
 				trackNum ^= 0x80;
 				
-				//System.out.print(trackNum + " ");
+				//DEBUG System.out.print(trackNum + " ");
 
 				// the offset of a video keyframe or -1
 				int videoKeyOffset = -1;
 				
 				// check if this is a video frame
 				if (trackNum == videoTrackNumber) {
-					//System.out.print("video ");
+					//DEBUG System.out.print("video ");
 					
 					int flags = buffer[elem.getDataOffset() + 3] & 0xff;
 					if ((flags & 0x80) != 0) {
 						// keyframe
 						
+						//DEBUG System.out.print("key ");
 						if (fragment.length() >= MINIMAL_FRAGMENT_LENGTH) {
 							
 							// closing current cluster (of the curent fragment)
@@ -120,6 +122,8 @@ class StreamingState implements StreamInputState {
 							if ((flags & 0x60) == 0) {
 								// no lacing
 								videoKeyOffset = elem.getDataOffset() + 4;
+							} else {
+								throw new RuntimeException("Lacing is not yet supported.");
 							}
 						}
 					}
@@ -128,10 +132,14 @@ class StreamingState implements StreamInputState {
 				// saving the block
 				//fragment.appendBlock(buffer, elem.getElementOffset(), elem.getElementSize());
 				fragment.appendKeyBlock(buffer, elem.getElementOffset(), elem.getElementSize(), videoKeyOffset);
-
-				//System.out.println();
+				
+				//DEBUG System.out.println();
+				
+				// end: ID_SIMPLEBLOCK
 			
-			} // end: ID_SIMPLEBLOCK
+			} else if (elem.getId() == ID_BLOCKGROUP) {
+				throw new RuntimeException("BlockGroup is not yet supported.");
+			}
 			
 			if (elem.getId() == ID_CLUSTER || elem.getDataSize() >= 0x100000000L) {
 				offset = elem.getDataOffset();
