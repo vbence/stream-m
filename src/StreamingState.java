@@ -139,8 +139,12 @@ class StreamingState implements StreamInputState {
 			
 			} else if (elem.getId() == ID_BLOCKGROUP) {
 				
+				// append the BlockGroup to the current fragment
+				fragment.appendBlock(buffer, elem.getElementOffset(), elem.getElementSize());
+
 				// BlockGroup element is not supported
-				throw new RuntimeException("BlockGroup is not yet supported.");
+				//throw new RuntimeException("BlockGroup is not yet supported.");
+				
 			
 			} else {
 				
