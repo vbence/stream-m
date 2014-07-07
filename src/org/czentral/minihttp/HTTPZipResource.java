@@ -35,14 +35,17 @@ public class HTTPZipResource implements HTTPResource {
         zip = new ZipFile(fileName);
     }
     
-        @Override
+    @Override
     public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
         final int BUFFER_LENGTH = 16 * 1024;
         
         // only GET is allowed
         if (!request.getMethod().equals(HTTPRequest.METHOD_GET))
             throw new HTTPException(400, "Bad Request");
-            
+        
+        if (request.getPathName().length() <= request.getResourcePath().length() + 1) {
+            throw new HTTPException(404, "Not Found");
+        }
         
         String entryName = request.getPathName().substring(request.getResourcePath().length() + 1);
         ZipEntry entry = zip.getEntry(entryName);
