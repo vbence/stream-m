@@ -24,10 +24,18 @@ class EBMLElement {
     private byte[] buffer;
     private int offset;
     private int dataOffset;
-        
+    
+    
     protected EBMLElement(byte[] buffer, int offset, int length) {
+        
+        if (length < 2) {
+                throw new RuntimeException("Partial header (buffered sample too small).");
+        }
+        
         this.buffer = buffer;
         this.offset = offset;
+
+        int limit = offset + length;
 
         long sizeFlag;
         long num;
@@ -35,6 +43,9 @@ class EBMLElement {
         sizeFlag = 0x80;
         num = 0;
         while (((num |= buffer[offset++] & 0xff) & sizeFlag) == 0 && sizeFlag != 0) {
+            if (offset >= limit) {
+                throw new RuntimeException("Partial header (buffered sample too small).");
+            }
             num <<= 8;
             sizeFlag <<= 7;
         }
@@ -44,6 +55,9 @@ class EBMLElement {
         sizeFlag = 0x80;
         num = 0;
         while (((num |= buffer[offset++] & 0xff) & sizeFlag) == 0 && sizeFlag != 0) {
+            if (offset >= limit) {
+                throw new RuntimeException("Partial header (buffered sample too small).");
+            }
             num <<= 8;
             sizeFlag <<= 7;
         }
