@@ -17,19 +17,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import java.net.*;
 import java.io.*;
-import java.util.Date;
+import org.czentral.util.stream.Buffer;
+import org.czentral.util.stream.Feeder;
+import org.czentral.util.stream.Processor;
 
 class StreamInput {
     
     private final Stream stream;
     private final InputStream input;
-    private boolean runs;
     
-    private byte[] header;
+    private Processor currentProcessor;
     
-    private StreamInputState currentState;
+    private final int BUFFER_SIZE = 65536;
         
     public StreamInput(Stream stream, InputStream input) {
         this.stream = stream;
@@ -37,63 +37,21 @@ class StreamInput {
     }
     
     public void run() {
-        runs = true;
         
         // notification about starting the input process
         stream.postEvent(new ServerEvent(this, stream, ServerEvent.INPUT_START));
         
-        changeState(new HeaderDetectionState(this, stream));
-        
-        byte[] buffer = new byte[65535];
-        int offset = 0;
-        int length = 0;
-        while (runs && stream.running()) {
-                
-            try {
-                
-                // starting time of the transfer
-                long transferStart = new Date().getTime();
-                
-                // reading data
-                int numBytes = input.read(buffer, offset, buffer.length - offset);
-                
-                // notification about the transfer
-                stream.postEvent(new TransferEvent(this, stream, TransferEvent.STREAM_INPUT, numBytes, new Date().getTime() - transferStart));
+        Buffer buffer = new Buffer(BUFFER_SIZE);
+        Feeder feeder = new Feeder(buffer, input);
 
-                if (numBytes == -1)
-                    runs = false;
-                length += numBytes;
-                
-                int newOffset = currentState.processData(buffer, 0, length);
-                if (newOffset < offset + length) {
-                    length = length - newOffset;
-                    System.arraycopy(buffer, newOffset, buffer, 0, length);
-                    offset = length;
-                } else {
-                    length = 0;
-                    offset = 0;
-                }
-                
-            } catch (SocketTimeoutException e) {
-                // not serious
-            } catch (Exception e) {
-                e.printStackTrace();
-                runs = false;
-            }
-        }
-        
-        try {
-            input.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        HeaderDetectionState hds = new HeaderDetectionState(this, stream);
+        feeder.feedTo(hds);
+
+        StreamingState ss = new StreamingState(this, stream, hds.getVideoTrackNumber());
+        feeder.feedTo(ss);
         
         // notification about ending the input process
         stream.postEvent(new ServerEvent(this, stream, ServerEvent.INPUT_STOP));
-    }
-    
-    public void changeState(StreamInputState newState) {
-        currentState = newState;
     }
     
 }

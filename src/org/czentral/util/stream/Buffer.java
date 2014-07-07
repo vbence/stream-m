@@ -30,10 +30,25 @@ public class Buffer {
     
     /**
      * Creates a </code>StreamBuffer</code> with the given size.
+     * 
+     * @param size Desired capacity of the buffer.
      */
     public Buffer(int size) {
         data = new byte[size];
-        
+    }
+    
+    /**
+     * Creates a </code>StreamBuffer</code> backed by the given array. Contents
+     * of the given array will be changed by the object.
+     * 
+     * @param buffer Array to use.
+     * @param offset Beginning of data in the buffer.
+     * @param length Length of data.
+     */
+    public Buffer(byte[] buffer, int offset, int length) {
+        data = buffer;
+        this.offset = offset;
+        this.length = length;
     }
     
     /**
@@ -52,15 +67,16 @@ public class Buffer {
     }
 
     /**
-     * Gets the offset of the first byte containing the data of this buffer inside the buffer array.
+     * Gets the offset of the first byte containing the data of this buffer
+     * inside the buffer array.
      */
     public int getOffset() {
         return offset;
     }
     
     /**
-     * Signals that the first <code>numOfBytes</code> bytes has been processed and should not be considered
-     * as part of the payload anymore.
+     * Signals that the first <code>numOfBytes</code> bytes has been processed
+     * and should not be considered as part of the payload anymore.
      * @param numOfBytes The number of bytes processed.
      */
     public void markProcessed(int numOfBytes) {
@@ -74,7 +90,8 @@ public class Buffer {
     }
     
     /**
-     * Signals that <code>numOfBytes</code> bytes of new data has been appended to the end of the payload.
+     * Signals that <code>numOfBytes</code> bytes of new data has been appended
+     * to the end of the payload.
      * @param numOfBytes The number of bytes appended.
      */
     public void markAppended(int numOfBytes) {

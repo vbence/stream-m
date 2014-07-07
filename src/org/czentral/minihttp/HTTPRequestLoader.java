@@ -44,11 +44,11 @@ class HTTPRequestLoader implements HTTPRequest {
     private int state = STATE_NOTHING_LOADED;
     
     // feeder
-    private Buffer buffer;
-    private InputStream input;
+    private final Buffer buffer;
+    private final InputStream input;
     private InputStream bodyStream;
     private Socket socket;
-    private Feeder feeder;
+    private final Feeder feeder;
     
     // parsed values
     private String requestMethod;
@@ -71,7 +71,7 @@ class HTTPRequestLoader implements HTTPRequest {
      * red but not part of the header) remains available after the loading
      * operation is done.
      *
-     * The maximum size of a request or header line is the size ofthe buffer.
+     * The maximum size of a request or header line is the size of the buffer.
      */
     public HTTPRequestLoader(Buffer buffer, InputStream input) {
         this.buffer = buffer;
@@ -80,7 +80,7 @@ class HTTPRequestLoader implements HTTPRequest {
     }
     
     /**
-     * Loads the full header. Callng this method forces the loader to process
+     * Loads the full header. Calling this method forces the loader to process
      * all the request headers, allowing the access the request body (e.g. POST
      * content).
      */
@@ -90,9 +90,10 @@ class HTTPRequestLoader implements HTTPRequest {
     }
     
     /**
-     * Gets request method (e.g. GET, POST, HEAD).
+     * Gets request method. (e.g. GET, POST, HEAD).
      * @return The query string.
      */
+    @Override
     public String getMethod() {
         loadRequestLine();
         return requestMethod;
@@ -102,6 +103,7 @@ class HTTPRequestLoader implements HTTPRequest {
      * Gets request URI (request path with query string).
      * @return The query string.
      */
+    @Override
     public String getRequestURI() {
         loadRequestLine();
         return requestURI;
@@ -111,25 +113,28 @@ class HTTPRequestLoader implements HTTPRequest {
      * Gets request path: the part of the URI without the query string (and the trailing '?').
      * @return The query string.
      */
+    @Override
     public String getPathName() {
         loadRequestLine();
         return requestPath;
     }
     
     /**
-     * Gets query string: the part ofthe URI after the '?' sign.
+     * Gets query string: the part of the URI after the '?' sign.
      * @return The query string.
      */
+    @Override
     public String getQueryString() {
         loadRequestLine();
         return requestMethod;
     }
     
     /**
-     * Gets treuest version. (e.g. <code>HTTP/1.1</code>)
+     * Gets request version. (e.g. <code>HTTP/1.1</code>)
      * @param key Header key.
      * @return Array containing the values for all header lines with this key.
      */
+    @Override
     public String getVersion() {
         loadRequestLine();
         return requestMethod;
@@ -140,16 +145,18 @@ class HTTPRequestLoader implements HTTPRequest {
      * @param key Header key.
      * @return Array containing the values for all header lines with this key.
      */
+    @Override
     public String[] getHeaders(String key) {
         loadRequestHeaders();
         return requestHeaders.get(key.toUpperCase());
     }
     
     /**
-     * Returns the <strong>lastest<strong> header field with this identifier.
+     * Returns the <strong>latest<strong> header field with this identifier.
      * @param key Header key.
      * @return The latest request header line with the given key.
      */
+    @Override
     public String getHeader(String key) {
         loadRequestHeaders();
         String[] values = requestHeaders.get(key.toUpperCase());
@@ -163,6 +170,7 @@ class HTTPRequestLoader implements HTTPRequest {
      * @param key Key in the query string.
      * @return Array containing the values for all get variables with this key.
      */
+    @Override
     public String[] getParameters(String key) {
         loadGetVars();
         return getParams.get(key);
@@ -173,6 +181,7 @@ class HTTPRequestLoader implements HTTPRequest {
      * @param key Key in the query string.
      * @return The latest get variable with the given key.
      */
+    @Override
     public String getParameter(String key) {
         loadGetVars();
         String[] values = getParams.get(key);
@@ -181,6 +190,7 @@ class HTTPRequestLoader implements HTTPRequest {
         return values[values.length - 1];
     }
     
+    @Override
     public InetAddress getRemoteAddress() {
         return remoteAddress;
     }
@@ -189,6 +199,7 @@ class HTTPRequestLoader implements HTTPRequest {
         remoteAddress = addr;
     }
     
+    @Override
     public Socket getSocket() {
         return socket;
     }
@@ -197,6 +208,7 @@ class HTTPRequestLoader implements HTTPRequest {
         this.socket = socket;
     }
     
+    @Override
     public InputStream getInputStream() {
         if (bodyStream == null) {
             loadFully();
@@ -211,6 +223,7 @@ class HTTPRequestLoader implements HTTPRequest {
         return bodyStream;
     }
     
+    @Override
     public String getResourcePath() {
         return resourcePath;
     }
@@ -287,16 +300,18 @@ class HTTPRequestLoader implements HTTPRequest {
     }
     
     
-    class RequestHeaderLoader extends Processor {
+    class RequestHeaderLoader implements Processor {
         
-        private MultimapBuilder requestHeaders = new MultimapBuilder();
+        private final MultimapBuilder requestHeaders = new MultimapBuilder();
 
         boolean finished = false;
         
+        @Override
         public boolean finished() {
             return finished;
         }
         
+        @Override
         public int process(byte[] buffer, int offset, int length) {
             int startOffset = offset;
             
@@ -352,14 +367,16 @@ class HTTPRequestLoader implements HTTPRequest {
     }
     
     
-    class RequestLineLoader extends Processor {
+    class RequestLineLoader implements Processor {
         
         boolean finished = false;
         
+        @Override
         public boolean finished() {
             return finished;
         }
         
+        @Override
         public int process(byte[] buffer, int offset, int length) {
             
             int startOffset = offset;

@@ -1,3 +1,6 @@
+
+import org.czentral.util.stream.Processor;
+
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -17,7 +20,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-class HeaderDetectionState implements StreamInputState {
+class HeaderDetectionState implements Processor {
     
     private static final long ID_EBML = 0x1A45DFA3;
     private static final long ID_SEGMENT = 0x18538067;
@@ -30,14 +33,22 @@ class HeaderDetectionState implements StreamInputState {
     private StreamInput input;
     private Stream stream;
     
+    private long videoTrackNumber = 0;
+    private boolean finished = false;
+    
     private static final byte[] infiniteSegment = {0x18, 0x53, (byte)0x80, 0x67, 0x01, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF};
         
     public HeaderDetectionState(StreamInput input, Stream stream) {
         this.input = input;
         this.stream = stream;
     }
+
+    public long getVideoTrackNumber() {
+        return videoTrackNumber;
+    }
     
-    public int processData(byte[] buffer, int offset, int length) {
+    @Override
+    public int process(byte[] buffer, int offset, int length) {
         
         int startOffset = offset;
         int endOffset = offset + length;
@@ -118,7 +129,6 @@ class HeaderDetectionState implements StreamInputState {
         headerLength += elem.getElementSize();
         
         // searching for video track's id
-        long videoTrackNumber = 0;
         int endOfTracks = elem.getEndOffset();
         offset = elem.getDataOffset();
         while (offset < endOfTracks) {
@@ -150,10 +160,14 @@ class HeaderDetectionState implements StreamInputState {
         byte[] header = new byte[headerLength];
         System.arraycopy(headerBuffer, 0, header, 0, headerLength);
         stream.setHeader(header);
-        
-        // change state
-        input.changeState(new StreamingState(input, stream, videoTrackNumber));
-        
+
+        finished = true;
         return segmentDataOffset;
     }
+
+    @Override
+    public boolean finished() {
+        return finished;
+    }
+    
 }

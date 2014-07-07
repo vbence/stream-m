@@ -49,13 +49,18 @@ public class Feeder {
     public void feedTo(Processor processor) {
         byte[] data = buffer.getData();
         
-        // processing current payload and signalling the buffer that the processed data can be discarded
-        int bytesProcessed = processor.process(data, buffer.getOffset(), buffer.getLength());
-        buffer.markProcessed(bytesProcessed);
-        
-        // is processing finished
-        while (!processor.finished()) {
+        do {
             
+            if (buffer.getLength() > 0) {
+                // processing current payload and signalling the buffer that the processed data can be discarded
+                int bytesProcessed = processor.process(data, buffer.getOffset(), buffer.getLength());
+                buffer.markProcessed(bytesProcessed);
+            }
+            
+            if (processor.finished()) {
+                return;
+            }
+        
             // compacting buffer (moving payload to the start of the buffer) to maximize space for input data
             buffer.compact();
             
@@ -73,9 +78,6 @@ public class Feeder {
                 throw new RuntimeException(e);
             }
             
-            // processing current payload and signalling the buffer that the processed data can be discarded
-            bytesProcessed = processor.process(data, 0, buffer.getLength());
-            buffer.markProcessed(bytesProcessed);
-        }
+        } while (true);
     }
 }

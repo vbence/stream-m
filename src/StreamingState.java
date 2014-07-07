@@ -1,3 +1,6 @@
+
+import org.czentral.util.stream.Processor;
+
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -17,7 +20,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-class StreamingState implements StreamInputState {
+class StreamingState implements Processor {
     
     private static final long ID_CLUSTER = 0x1F43B675;
     private static final long ID_SIMPLEBLOCK = 0xA3;
@@ -40,10 +43,13 @@ class StreamingState implements StreamInputState {
         this.videoTrackNumber = videoTrackNumber;
         fragment = new MatroskaFragment();
     }
-        
-    public int processData(byte[] buffer, int offset, int length) {
+    
+    @Override
+    public int process(byte[] buffer, int offset, int length) {
             
         int endOffset = offset + length;
+        int startOffset = offset;
+        
         EBMLElement elem;
         
         while (offset < endOffset - 12) {
@@ -160,6 +166,12 @@ class StreamingState implements StreamInputState {
             }
         }
         
-        return offset;
+        return offset - startOffset;
     }
+
+    @Override
+    public boolean finished() {
+        return false;
+    }
+    
 }
