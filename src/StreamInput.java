@@ -20,14 +20,11 @@
 import java.io.*;
 import org.czentral.util.stream.Buffer;
 import org.czentral.util.stream.Feeder;
-import org.czentral.util.stream.Processor;
 
 class StreamInput {
     
     private final Stream stream;
     private final InputStream input;
-    
-    private Processor currentProcessor;
     
     private final int BUFFER_SIZE = 65536;
         
@@ -41,9 +38,11 @@ class StreamInput {
         // notification about starting the input process
         stream.postEvent(new ServerEvent(this, stream, ServerEvent.INPUT_START));
         
+        MeasuredInputStream mis = new MeasuredInputStream(input, stream);
+        
         Buffer buffer = new Buffer(BUFFER_SIZE);
-        Feeder feeder = new Feeder(buffer, input);
-
+        Feeder feeder = new Feeder(buffer, mis);
+        
         HeaderDetectionState hds = new HeaderDetectionState(this, stream);
         feeder.feedTo(hds);
 

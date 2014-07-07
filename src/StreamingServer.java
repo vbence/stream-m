@@ -137,7 +137,7 @@ class StreamingServer {
             // setting socket parameters
             Socket sock = request.getSocket();
             try {
-                //sock.setSoTimeout(100);
+                sock.setSoTimeout(100);
                 sock.setReceiveBufferSize(256 * 1024);
             } catch (Exception e) {
                 throw new RuntimeException("Cannot set socket parameters", e);
