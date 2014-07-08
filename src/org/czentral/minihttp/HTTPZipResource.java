@@ -18,12 +18,6 @@
 */
 package org.czentral.minihttp;
 
-/*
- * Author: User
- * Created: Thursday, April 29, 2010 5:13:55 PM
- * Modified: Thursday, April 29, 2010 5:13:55 PM
- */
-
 import java.util.zip.*;
 import java.io.*;
 

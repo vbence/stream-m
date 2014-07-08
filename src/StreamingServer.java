@@ -21,7 +21,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.*;
-import threadedevent.EventDispatcher;
+import org.czentral.event.EventDispatcher;
 import org.czentral.minihttp.*;
 
 class StreamingServer {

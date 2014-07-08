@@ -110,7 +110,8 @@ class HTTPRequestLoader implements HTTPRequest {
     }
     
     /**
-     * Gets request path: the part of the URI without the query string (and the trailing '?').
+     * Gets request path: the part of the URI without the query string (and the
+     * trailing '?').
      * @return The query string.
      */
     @Override
@@ -166,7 +167,8 @@ class HTTPRequestLoader implements HTTPRequest {
     }
     
     /**
-     * Returns all the get parameters with this identifier (in the order of appearance).
+     * Returns all the get parameters with this identifier (in the order of
+     * appearance).
      * @param key Key in the query string.
      * @return Array containing the values for all get variables with this key.
      */
@@ -283,10 +285,11 @@ class HTTPRequestLoader implements HTTPRequest {
     }
     
     /**
-     * Returns the offset of the first occurence of a given byte inside the selected region of an array.
+     * Returns the offset of the first occurrence of a given byte inside the
+     * selected region of an array.
      * 
      * @param array The array containing the data to search in.
-     * @param offset The offset of the first data bayte to compare.
+     * @param offset The offset of the first data byte to compare.
      * @param length The number of bytes to compare.
      * @param value The value to search for.
      * @return Index of the first occurrence of the given value or -1 if no match.

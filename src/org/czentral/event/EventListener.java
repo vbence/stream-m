@@ -17,41 +17,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package threadedevent;
+package org.czentral.event;
 
-import java.util.Date;
+/**
+ * A general event listener interface.
+ */
+public interface EventListener {
 
-public abstract class EventImpl implements Event {
+    public void handleEvent(Event event);
     
-    private Object source;
-    
-    private int type;
-    
-    private Date date;
-    
-    protected EventImpl (Object source) {
-        this(source, 0, new Date());
-    }
-    
-    protected EventImpl (Object source, int type) {
-        this(source, type, new Date());
-    }
-    
-    protected EventImpl (Object source, int type, Date date) {
-        this.source = source;
-        this.type = type;
-        this.date = date;
-    }
-    
-    public int getType() {
-        return type;
-    }
-    
-    public Object getSource() {
-        return source;
-    }
-    
-    public Date getDate() {
-        return date;
-    }
 }

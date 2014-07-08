@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import threadedevent.GeneralEventProducer;
+import org.czentral.event.GeneralEventProducer;
 
 class Stream extends GeneralEventProducer {
     

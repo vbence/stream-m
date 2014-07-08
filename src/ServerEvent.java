@@ -18,7 +18,7 @@
 */
 
 import java.util.Date;
-import threadedevent.EventImpl;
+import org.czentral.event.EventImpl;
 
 public class ServerEvent extends EventImpl {
     

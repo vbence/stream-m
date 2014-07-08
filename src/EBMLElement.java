@@ -29,7 +29,7 @@ class EBMLElement {
     protected EBMLElement(byte[] buffer, int offset, int length) {
         
         if (length < 2) {
-                throw new RuntimeException("Partial header (buffered sample too small).");
+            throw new RuntimeException("Partial header (buffered sample too small).");
         }
         
         this.buffer = buffer;

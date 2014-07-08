@@ -1,7 +1,3 @@
-
-import java.nio.ByteBuffer;
-import org.czentral.util.stream.Buffer;
-
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -20,6 +16,8 @@ import org.czentral.util.stream.Buffer;
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+import java.nio.ByteBuffer;
 
 class MatroskaFragment {
     

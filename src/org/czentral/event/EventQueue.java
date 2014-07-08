@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package threadedevent;
+package org.czentral.event;
 
 /**
  * Event queue for asynchronous processing.
@@ -55,7 +55,7 @@ public class EventQueue {
     }
     
     /**
-     * Unshifts the event first in the queue. This method <b>blocks</b> until an event
+     * Un-shifts the event first in the queue. This method <b>blocks</b> until an event
      * is available.
      * 
      * @return The event which is in the queue for the longest time (not necessarily the oldest event).

@@ -17,14 +17,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import java.util.Vector;
-import threadedevent.EventDispatcher;
-import threadedevent.EventListener;
-import threadedevent.EventQueue;
+import org.czentral.event.EventDispatcher;
+import org.czentral.event.EventQueue;
     
 public class ControlledStream extends Stream {
     
-    private int maxClients;
+    private final int maxClients;
     private int numClients;
     
     private EventDispatcher dispatcher;

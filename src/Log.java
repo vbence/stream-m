@@ -24,7 +24,7 @@ class Log {
         
         String s = "(" + maxLength + ")";
         for (int i=0; i<Math.min(DISPLAY_MAX_LENGTH, maxLength); i++) {
-            String digit = new String("0" + Integer.toHexString(buffer[offset + i] & 0xff));
+            String digit = "0" + Integer.toHexString(buffer[offset + i] & 0xff);
             s += " " + digit.substring(digit.length() - 2);
         }
         s += "  ";

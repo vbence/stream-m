@@ -18,12 +18,10 @@
 */
 
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.Date;
-import java.util.Vector;
-import threadedevent.Event;
-import threadedevent.EventListener;
-import threadedevent.EventDispatcher;
+import org.czentral.event.Event;
+import org.czentral.event.EventListener;
+import org.czentral.event.EventDispatcher;
 
 public class EventAnalizer implements EventListener {
     

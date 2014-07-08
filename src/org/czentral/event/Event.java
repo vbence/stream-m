@@ -16,33 +16,37 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+package org.czentral.event;
 
-package threadedevent;
 
+import java.util.Date;
 
-public class GeneralEventProducer {
+/**
+ * Interface for general-purpose events.
+ */
+public interface Event {
     
-    private EventQueue eventQueue;
+    /**
+     * Gets the originating object of this event.
+     *
+     * @return Originating object.
+     */
+    public Object getSource();
     
-    public EventQueue getEventQueue() {
-        return eventQueue;
-    }
+    /**
+     * Gets the type of the event. Implementing classes should define the possible
+     * types. Event handlers should check for the class of the event object
+     * (e.g. with instanceOf operator), then check for the type.
+     *
+     * @return Event type (specified by implementing classes).
+     */
+    public int getType();
     
-    public void setEventQueue(EventQueue queue) {
-        if (this.eventQueue != null)
-            throw new RuntimeException("An event queue already bound to this object.");
-        this.eventQueue = queue;
-    }
+    /**
+     * Gets the time when this event occurred.
+     *
+     * @return Date object representing the time of the event.
+     */
+    public Date getDate();
     
-    public void removeEventQueue() {
-        eventQueue = null;
-    }
-    
-    public boolean postEvent(Event event) {
-        if (eventQueue == null)
-            return false;
-        
-        eventQueue.post(event);
-        return true;
-    }
 }

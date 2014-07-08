@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package threadedevent;
+package org.czentral.event;
 
 import java.util.ArrayList;
 import java.util.Collection;
