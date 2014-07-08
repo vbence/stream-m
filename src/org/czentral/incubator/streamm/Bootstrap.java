@@ -29,11 +29,14 @@ import org.czentral.minihttp.*;
 public class Bootstrap {
     
     // configuration settings
-    private static Properties props = new Properties();
+    private Properties props;
     
     // streams by name
-    private static Map<String, ControlledStream> streams = new HashMap<String, ControlledStream>();
-    
+    private Map<String, ControlledStream> streams = new HashMap<String, ControlledStream>();
+
+    public Bootstrap(Properties props) {
+        this.props = props;
+    }
     
     public static void main(String args[]) {
         
@@ -44,16 +47,18 @@ public class Bootstrap {
         }
         
         // loading config
+        Properties props = null;
         try {
             String filename = args[0];
             InputStream in = new FileInputStream(filename);
+            props = new Properties();
             props.load(in);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         
         // instantiating and running the server
-        new Bootstrap().run();
+        new Bootstrap(props).run();
     }
     
     public void run() {
