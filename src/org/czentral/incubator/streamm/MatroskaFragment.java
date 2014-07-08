@@ -1,5 +1,3 @@
-package org.czentral.incubator.streamm;
-
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -19,7 +17,9 @@ package org.czentral.incubator.streamm;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import java.nio.ByteBuffer;
+package org.czentral.incubator.streamm;
+
+import org.czentral.util.stream.Buffer;
 
 public class MatroskaFragment {
     
@@ -33,8 +33,7 @@ public class MatroskaFragment {
     private int dataLength = 0;
     private int clusterOffset = -1;
     
-    private int keyframeOffset = -1;
-    private int keyframeLength = -1;
+    private Buffer keyBuffer = null;
     
     public MatroskaFragment() {
     }
@@ -80,8 +79,7 @@ public class MatroskaFragment {
     
     public void appendKeyBlock(byte[] buffer, int offset, int length, int keyframeOffset) {
         if (keyframeOffset > 0) {
-            this.keyframeOffset = dataLength + (keyframeOffset - offset);
-            this.keyframeLength = length - (keyframeOffset - offset);
+            keyBuffer = new Buffer(data, dataLength + (keyframeOffset - offset), length - (keyframeOffset - offset));
         }
         appendBlock(buffer, offset, length);
     }
@@ -94,20 +92,17 @@ public class MatroskaFragment {
         dataLength += length;
     }
     
-        public ByteBuffer[] getBuffers() {
-            ByteBuffer[] result = { ByteBuffer.wrap(data, 0, dataLength) };
-            return result;
-        }
+    public Buffer[] getBuffers() {
+        Buffer[] result = { new Buffer(data, 0, dataLength) };
+        return result;
+    }
     
     public int length() {
         return dataLength;
     }
-    
-    public int getKeyframeOffset() {
-        return keyframeOffset;
+
+    public Buffer getKeyBuffer() {
+        return keyBuffer;
     }
     
-    public int getKeyframeLength() {
-        return keyframeLength;
-    }
 }

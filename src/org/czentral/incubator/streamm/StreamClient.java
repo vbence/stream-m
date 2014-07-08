@@ -21,6 +21,7 @@ package org.czentral.incubator.streamm;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import org.czentral.util.stream.Buffer;
     
 public class StreamClient {
     
@@ -95,11 +96,11 @@ public class StreamClient {
                 // send the fragment data to the client
                 try {
                     
-                    ByteBuffer[] dataBuffers = fragment.getBuffers();
-                    for (ByteBuffer buffer : dataBuffers) {
+                    Buffer[] buffers = fragment.getBuffers();
+                    for (Buffer buffer : buffers) {
                         
                         // writing data packet
-                        output.write(buffer.array(), buffer.position(), buffer.limit());
+                        output.write(buffer.getData(), buffer.getOffset(), buffer.getLength());
 
                     }
                     

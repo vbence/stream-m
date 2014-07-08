@@ -19,7 +19,6 @@
 
 package org.czentral.incubator.streamm.web;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 import org.czentral.incubator.streamm.ControlledStream;
 import org.czentral.incubator.streamm.MatroskaFragment;
@@ -28,6 +27,7 @@ import org.czentral.minihttp.HTTPException;
 import org.czentral.minihttp.HTTPRequest;
 import org.czentral.minihttp.HTTPResource;
 import org.czentral.minihttp.HTTPResponse;
+import org.czentral.util.stream.Buffer;
 
 /**
  *
@@ -73,7 +73,7 @@ public class SnapshotResource implements HTTPResource {
             throw new HTTPException(404, "No Fragment Found");
         }
         // check if there is a keyframe available
-        if (fragment.getKeyframeLength() < 0) {
+        if (fragment.getKeyBuffer() == null) {
             throw new HTTPException(404, "No Keyframe Found");
         }
         // RIFF header
@@ -82,14 +82,14 @@ public class SnapshotResource implements HTTPResource {
         int num;
         // saving data length
         offset = 7;
-        num = fragment.getKeyframeLength() + 12;
+        num = fragment.getKeyBuffer().getLength() + 12;
         while (num > 0) {
             header[offset--] = (byte) num;
             num >>= 8;
         }
         // saving payload length
         offset = 19;
-        num = fragment.getKeyframeLength();
+        num = fragment.getKeyBuffer().getLength();
         while (num > 0) {
             header[offset--] = (byte) num;
             num >>= 8;
@@ -98,8 +98,7 @@ public class SnapshotResource implements HTTPResource {
             // sending header
             response.getOutputStream().write(header, 0, header.length);
             // sending data
-            ByteBuffer[] dataBuffers = fragment.getBuffers();
-            response.getOutputStream().write(dataBuffers[0].array(), fragment.getKeyframeOffset(), fragment.getKeyframeLength());
+            response.getOutputStream().write(fragment.getKeyBuffer().getData(), fragment.getKeyBuffer().getOffset(), fragment.getKeyBuffer().getLength());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
