@@ -1,3 +1,5 @@
+package org.czentral.incubator.streamm;
+
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -20,7 +22,7 @@
 import java.io.*;
 import java.nio.ByteBuffer;
     
-class StreamClient {
+public class StreamClient {
     
     private Stream stream;
     private OutputStream output;

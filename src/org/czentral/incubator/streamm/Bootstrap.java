@@ -1,3 +1,5 @@
+package org.czentral.incubator.streamm;
+
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -17,6 +19,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import org.czentral.incubator.streamm.ControlledStream;
+import org.czentral.incubator.streamm.StreamInput;
+import org.czentral.incubator.streamm.MeasuredInputStream;
+import org.czentral.incubator.streamm.EventAnalizer;
+import org.czentral.incubator.streamm.StreamClient;
+import org.czentral.incubator.streamm.MeasuredOutputStream;
+import org.czentral.incubator.streamm.MatroskaFragment;
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -24,7 +33,7 @@ import java.util.*;
 import org.czentral.event.EventDispatcher;
 import org.czentral.minihttp.*;
 
-class StreamingServer {
+public class Bootstrap {
     
     // configuration settings
     private static Map<String, String> settings = new HashMap<String, String>(20);
@@ -60,7 +69,7 @@ class StreamingServer {
         }
         
         // instantiating and running the server
-        new StreamingServer().run();
+        new Bootstrap().run();
     }
     
     private static void loadConfig(String filename) {

@@ -1,3 +1,5 @@
+package org.czentral.incubator.streamm;
+
 /*
  * This file is part of the "stream-m" software. An HTML5 compatible live
  * streaming server.
@@ -31,7 +33,7 @@ import java.util.Date;
  * 
  * @author Varga Bence
  */
-class MeasuredOutputStream extends OutputStream {
+public class MeasuredOutputStream extends OutputStream {
     
     private final int DEFAULT_PACKET_SIZE = 64 * 1024;
 

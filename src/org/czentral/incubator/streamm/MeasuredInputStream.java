@@ -1,3 +1,5 @@
+package org.czentral.incubator.streamm;
+
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -26,7 +28,7 @@ import java.util.Date;
  *
  * @author Varga Bence
  */
-class MeasuredInputStream extends InputStream {
+public class MeasuredInputStream extends InputStream {
     
     protected final InputStream base;
     protected final Stream stream;

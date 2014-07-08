@@ -1,3 +1,5 @@
+package org.czentral.incubator.streamm;
+
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -21,7 +23,7 @@ import java.io.*;
 import org.czentral.util.stream.Buffer;
 import org.czentral.util.stream.Feeder;
 
-class StreamInput {
+public class StreamInput {
     
     private final Stream stream;
     private final InputStream input;

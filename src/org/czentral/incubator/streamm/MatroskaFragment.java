@@ -1,3 +1,5 @@
+package org.czentral.incubator.streamm;
+
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -19,7 +21,7 @@
 
 import java.nio.ByteBuffer;
 
-class MatroskaFragment {
+public class MatroskaFragment {
     
     private final int INITIAL_CLUSTER_LENGTH = 9;
     private final int TIMECODE_LAST_OFFSET = 18;
