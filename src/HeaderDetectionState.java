@@ -1,6 +1,3 @@
-
-import org.czentral.util.stream.Processor;
-
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -19,6 +16,8 @@ import org.czentral.util.stream.Processor;
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+import org.czentral.util.stream.Processor;
 
 class HeaderDetectionState implements Processor {
     
@@ -50,7 +49,6 @@ class HeaderDetectionState implements Processor {
     @Override
     public int process(byte[] buffer, int offset, int length) {
         
-        int startOffset = offset;
         int endOffset = offset + length;
         
         byte[] headerBuffer = new byte[65536];
@@ -84,13 +82,11 @@ class HeaderDetectionState implements Processor {
             offset = elem.getEndOffset();
         } while (offset < endOffset);
     
-        // not found
+        // if not found ...
         if (offset >= endOffset)
-            return startOffset;
+            return 0;
         
         
-        System.out.println("Segment found");
-
         int segmentDataOffset = elem.getDataOffset();
         
         // looking for: Info
@@ -100,11 +96,9 @@ class HeaderDetectionState implements Processor {
             offset = elem.getEndOffset();
         } while (offset < endOffset && elem.getId() != ID_INFO);
     
-        // not found
+        // if not found ...
         if (offset >= endOffset)
-            return startOffset;
-
-        System.out.println("Info found");
+            return 0;
 
         // COPYING: Info headerBuffer
         System.arraycopy(buffer, elem.getElementOffset(), headerBuffer, headerLength, elem.getElementSize());
@@ -118,11 +112,9 @@ class HeaderDetectionState implements Processor {
             offset = elem.getEndOffset();
         } while (offset < endOffset && elem.getId() != ID_TRACKS);
     
-        // not found
+        // if not found ...
         if (offset >= endOffset)
-            return startOffset;
-
-        System.out.println("Tracks found");
+            return 0;
 
         // COPYING: Tracks headerBuffer
         System.arraycopy(buffer, elem.getElementOffset(), headerBuffer, headerLength, elem.getElementSize());
@@ -147,14 +139,12 @@ class HeaderDetectionState implements Processor {
                 }
                 offset = property.getEndOffset();
             }
-            System.out.println("track no: " + trackNumber + ", type: " + trackType);
+            
             if (trackType == TRACK_TYPE_VIDEO)
                 videoTrackNumber = trackNumber;
             
             offset = track.getEndOffset();
         }
-        
-        System.out.println("ALL'S WELL");
         
         // setting header for the stream
         byte[] header = new byte[headerLength];
