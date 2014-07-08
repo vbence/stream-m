@@ -73,7 +73,7 @@ public class EventAnalizer implements EventListener {
         dispatcher.addListener(this);
         runs = true;
         
-        while (runs && stream.running()) {
+        while (runs && stream.isRunning()) {
             try {
                 Thread.sleep(2000);
             } catch (Exception e) {

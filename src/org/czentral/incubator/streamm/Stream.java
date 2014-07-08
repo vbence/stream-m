@@ -21,7 +21,7 @@ package org.czentral.incubator.streamm;
 
 import org.czentral.event.GeneralEventProducer;
 
-class Stream extends GeneralEventProducer {
+public class Stream extends GeneralEventProducer {
     
     private MatroskaFragment fragment;
     private int fragmentAge;
@@ -30,7 +30,7 @@ class Stream extends GeneralEventProducer {
     
     private boolean runs = true;
     
-    public synchronized boolean running() {
+    public synchronized boolean isRunning() {
         return runs;
     }
     

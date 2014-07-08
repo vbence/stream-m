@@ -44,7 +44,7 @@ public class StreamClient {
         
         // waiting for header
         byte[] header = stream.getHeader();
-        while (header == null && stream.running()) {
+        while (header == null && stream.isRunning()) {
             
             // sleeping 200 ms
             try {
@@ -77,11 +77,11 @@ public class StreamClient {
         
         // sending fragments
         int myAge = 0;
-        while (runs && stream.running()) {
+        while (runs && stream.isRunning()) {
             
             // while there is a new fragment is available
             int streamAge;
-            while (runs && stream.running() && myAge < (streamAge = stream.getFragmentAge())) {
+            while (runs && stream.isRunning() && myAge < (streamAge = stream.getFragmentAge())) {
                 
                 // notification if a fragment was skipped
                 if (myAge > 0 && streamAge - myAge > 1)

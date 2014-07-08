@@ -19,18 +19,12 @@ package org.czentral.incubator.streamm;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.czentral.incubator.streamm.ControlledStream;
-import org.czentral.incubator.streamm.StreamInput;
-import org.czentral.incubator.streamm.MeasuredInputStream;
-import org.czentral.incubator.streamm.EventAnalizer;
-import org.czentral.incubator.streamm.StreamClient;
-import org.czentral.incubator.streamm.MeasuredOutputStream;
-import org.czentral.incubator.streamm.MatroskaFragment;
+import org.czentral.incubator.streamm.web.SnapshotResource;
+import org.czentral.incubator.streamm.web.PublisherResource;
+import org.czentral.incubator.streamm.web.ConsumerResource;
+import org.czentral.incubator.streamm.web.InfoResource;
 import java.io.*;
-import java.net.*;
-import java.nio.ByteBuffer;
 import java.util.*;
-import org.czentral.event.EventDispatcher;
 import org.czentral.minihttp.*;
 
 public class Bootstrap {
@@ -40,6 +34,7 @@ public class Bootstrap {
         
     // streams by name
     private static Map<String, ControlledStream> streams = new HashMap<String, ControlledStream>();
+    
     
     public static void main(String args[]) {
         
@@ -80,16 +75,16 @@ public class Bootstrap {
         System.out.println("Stating server on port: " + serverPort);
         MiniHTTP server = new MiniHTTP(Integer.parseInt(serverPort));
         
-        PublisherResource publish = new PublisherResource();
+        PublisherResource publish = new PublisherResource(settings, streams);
         server.registerResource("/publish", publish);
 
-        ConsumerResource consume = new ConsumerResource();
+        ConsumerResource consume = new ConsumerResource(settings, streams);
         server.registerResource("/consume", consume);
 
-        SnapshotResource snapshot = new SnapshotResource();
+        SnapshotResource snapshot = new SnapshotResource(settings, streams);
         server.registerResource("/snapshot", snapshot);
 
-        InfoResource info = new InfoResource();
+        InfoResource info = new InfoResource(settings, streams);
         server.registerResource("/info", info);
         
         /*
@@ -107,264 +102,4 @@ public class Bootstrap {
         server.start();
     }
 
-    class PublisherResource implements HTTPResource {
-        
-        public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
-            
-            // the part of the request path after the resource's path
-            int resLength = request.getResourcePath().length();
-            String requestPath = request.getPathName();
-            if (requestPath.length() - resLength <= 1)
-                throw new HTTPException(404, "No Stream ID Specified");
-            
-            // stream ID
-            String streamID = requestPath.substring(resLength + 1);
-            
-            // is a stream with that name defined?
-            if (settings.get("streams." + streamID) == null)
-                throw new HTTPException(403, "Stream Not Registered");
-            
-            // check password
-            String requestPassword = request.getParameter("password");
-            if (requestPassword == null)
-                throw new HTTPException(403, "Authentication failed: No password");
-            if (!requestPassword.equals(settings.get("streams." + streamID + ".password")))
-                throw new HTTPException(403, "Authentication failed: Wrong password");
-            
-            // stopping stream if already running
-            ControlledStream stream = streams.get(streamID);
-            if (stream != null) {
-                stream.stop();
-            }
-            
-            // creating new Sream instance
-            stream = new ControlledStream(Integer.parseInt(settings.get("streams." + streamID + ".limit")));
-            
-            // put stream to in the collection
-            streams.put(streamID, stream);
-            
-            // setting socket parameters
-            Socket sock = request.getSocket();
-            try {
-                sock.setSoTimeout(100);
-                sock.setReceiveBufferSize(256 * 1024);
-            } catch (Exception e) {
-                throw new RuntimeException("Cannot set socket parameters", e);
-            }
-            
-            // generate transfer events to mesaure bandwidth usage
-            MeasuredInputStream mis = new MeasuredInputStream(request.getInputStream(), stream);
-            
-            // creating input reader
-            StreamInput streamInput = new StreamInput(stream, mis);
-            
-            /*
-             * Start publishing
-             */
-
-            // this thread is working (will be blocked) while the stream is being published
-            streamInput.run();
-            
-            /*
-             * End of publishing
-             */
-            
-            // stopping stream (clients get notified)
-            stream.stop();
-            
-        }
-    }
-    
-    class ConsumerResource implements HTTPResource {
-        
-        private final String STR_CONTENT_TYPE = "Content-type";
-        
-        public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
-            // the part of the path after the resource's path
-            int resLength = request.getResourcePath().length();
-            String requestPath = request.getPathName();
-            if (requestPath.length() - resLength <= 1)
-                throw new HTTPException(400, "No Stream ID Specified");
-            
-            // Stream ID
-            String streamID = requestPath.substring(resLength + 1);
-            
-            // is a stream with that Stream ID defined?
-            if (settings.get("streams." + streamID) == null)
-                throw new HTTPException(404, "Stream Not Registered");
-            
-            // getting stream
-            ControlledStream stream = streams.get(streamID);
-            if (stream == null || !stream.running())
-                throw new HTTPException(503, "Stream Not Running");
-            
-            // check if there are free slots
-            if (!stream.subscribe(false))
-                throw new HTTPException(503, "Resource Busy");
-
-            // setting rsponse content-type
-            response.setParameter(STR_CONTENT_TYPE, "video/webm");
-            
-            // log transfer events (bandwidth usage)
-            final int PACKET_SIZE = 24 * 1024;
-            MeasuredOutputStream mos = new MeasuredOutputStream(response.getOutputStream(), stream, PACKET_SIZE);
-            
-            // create a client
-            StreamClient client = new StreamClient(stream, mos);
-            
-            // serving the request (from this thread)
-            client.run();
-            
-            // freeing the slot
-            stream.unsubscribe();
-                
-        }
-    }
-
-    class SnapshotResource implements HTTPResource {
-        
-        private final String STR_CONTENT_TYPE = "Content-type";
-        
-        public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
-            // the part of the path after the resource's path
-            int resLength = request.getResourcePath().length();
-            String requestPath = request.getPathName();
-            if (requestPath.length() - resLength <= 1)
-                throw new HTTPException(400, "No Stream ID Specified");
-            
-            // Stream ID
-            String streamID = requestPath.substring(resLength + 1);
-            
-            // is a stream with that Stream ID defined?
-            if (settings.get("streams." + streamID) == null)
-                throw new HTTPException(404, "Stream Not Registered");
-            
-            // getting stream
-            ControlledStream stream = streams.get(streamID);
-            if (stream == null || !stream.running())
-                throw new HTTPException(503, "Stream Not Running");
-            
-            // setting rsponse content-type
-            response.setParameter(STR_CONTENT_TYPE, "image/webp");
-            
-            // getting current fragment
-            MatroskaFragment fragment = stream.getFragment();
-            
-            // check if there is a fragment available
-            if (fragment == null)
-                throw new HTTPException(404, "No Fragment Found");
-            
-            // check if there is a keyframe available
-            if (fragment.getKeyframeLength() < 0)
-                throw new HTTPException(404, "No Keyframe Found");
-                
-            // RIFF header
-            byte[] header = {'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'E', 'B', 'P', 'V', 'P', '8', ' ', 0, 0, 0, 0};
-            
-            int offset;
-            int num;
-
-            // saving data length
-            offset = 7;
-            num = fragment.getKeyframeLength() + 12;
-            while (num > 0) {
-                header[offset--] = (byte)num;
-                num >>= 8;
-            }
-            
-            // saving payload length
-            offset = 19;
-            num = fragment.getKeyframeLength();
-            while (num > 0) {
-                header[offset--] = (byte)num;
-                num >>= 8;
-            }
-            
-            try {
-                
-                // sending header
-                response.getOutputStream().write(header, 0, header.length);
-                
-                // sending data
-                ByteBuffer[] dataBuffers = fragment.getBuffers();
-                response.getOutputStream().write(dataBuffers[0].array(), fragment.getKeyframeOffset(), fragment.getKeyframeLength());
-            
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            
-        }
-    }
-        
-    class InfoResource implements HTTPResource {
-        
-        private final String STR_CONTENT_TYPE = "Content-type";
-        
-        public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
-            
-            // the part of the path after the resource's path
-            int resLength = request.getResourcePath().length();
-            String requestPath = request.getPathName();
-            if (requestPath.length() - resLength <= 1)
-                throw new HTTPException(400, "No Stream ID Specified");
-            
-            // stream ID
-            String streamID = requestPath.substring(resLength + 1);
-            
-            // is a stream with that name defined?
-            if (settings.get("streams." + streamID) == null)
-                throw new HTTPException(404, "Stream Not Registered");
-            
-            // check password
-            String requestPassword = request.getParameter("password");
-            if (requestPassword == null)
-                throw new HTTPException(403, "Authentication failed: No password");
-            if (!requestPassword.equals(settings.get("streams." + streamID + ".password")))
-                throw new HTTPException(403, "Authentication failed: Wrong password");
-
-            // getting stream
-            ControlledStream stream = streams.get(streamID);
-            if (stream == null || !stream.running())
-                throw new HTTPException(503, "Stream Not Running");
-            
-            // setting rsponse content-type
-            response.setParameter(STR_CONTENT_TYPE, "text/plain");
-
-            // get evet dispatcher (if no current one then it is created)
-            EventDispatcher dispatcher = stream.getEventDispatcher();
-            
-            // creating analizer
-            EventAnalizer analizer = new EventAnalizer(stream, dispatcher, response.getOutputStream());
-            
-            // serving the request (from this thread)
-            analizer.run();
-            
-        }
-    }
-    
-    class FileResource implements HTTPResource {
-        
-        private String fileName;
-        
-        public FileResource(String fileName) {
-            this.fileName = fileName;
-        }
-        
-        public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
-            try {
-                File headFile = new File(fileName);
-                FileInputStream fis = new FileInputStream(headFile);
-                byte[] data = new byte[(int)headFile.length()];
-                fis.read(data, 0, data.length);
-                fis.close();
-                
-                response.getOutputStream().write(data);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            
-        }
-    }
-    
 }
-
