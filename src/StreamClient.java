@@ -19,7 +19,6 @@
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.Date;
     
 class StreamClient {
     
@@ -93,41 +92,16 @@ class StreamClient {
                 
                 // send the fragment data to the client
                 try {
-                    // writing the data for one shot (less cpu usage)
-                    //output.write(fragment.getData(), 0, fragment.length());
-                    
-                    /*
-                     * Writing the data in packets (cunks of arbitrary size) to
-                     * get a better time-resolution for the outputbandwidth
-                     * used.
-                     */
                     
                     final int PACKET_SIZE = 24 * 1024;
-                                        ByteBuffer[] dataBuffers = fragment.getBuffers();
-                                        for (ByteBuffer buffer : dataBuffers) {
-                                            
-                                                int fragLength = buffer.limit();
-                                                int offset = buffer.position();
-                                                while (fragLength > 0) {
+                    MeasuredOutputStream mos = new MeasuredOutputStream(output, stream, PACKET_SIZE);
 
-                                                        // current packet size
-                                                        int length = fragLength;
-                                                        if (length >= 1.5 * PACKET_SIZE)
-                                                                length = PACKET_SIZE;
+                    ByteBuffer[] dataBuffers = fragment.getBuffers();
+                    for (ByteBuffer buffer : dataBuffers) {
+                        
+                        // writing data packet
+                        mos.write(buffer.array(), buffer.position(), buffer.limit());
 
-                                                        // starting time of the transfer
-                                                        long transferStart = new Date().getTime();
-
-                                                        // writing data packet
-                                                        output.write(buffer.array(), offset, length);
-
-                                                        // notification about the transfer
-                                                        stream.postEvent(new TransferEvent(this, stream, TransferEvent.STREAM_OUTPUT, length, new Date().getTime() - transferStart));
-
-                                                        // next packet (chunk) start
-                                                        offset += length;
-                                                        fragLength -= length;
-                                                }
                     }
                     
                 } catch (Exception e) {
