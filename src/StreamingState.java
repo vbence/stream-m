@@ -1,6 +1,3 @@
-
-import org.czentral.util.stream.Processor;
-
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -19,6 +16,8 @@ import org.czentral.util.stream.Processor;
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+import org.czentral.util.stream.Processor;
 
 class StreamingState implements Processor {
     
@@ -68,7 +67,7 @@ class StreamingState implements Processor {
                  * keep the data beyound this offset and the next processing cycle
                  * will begin with this element.
                  */
-                return elem.getElementOffset();
+                return elem.getElementOffset() - startOffset;
             }
 
             /* Timecode for this cluster. We use a flat processing model (we do
