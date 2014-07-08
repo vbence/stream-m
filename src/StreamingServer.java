@@ -143,8 +143,11 @@ class StreamingServer {
                 throw new RuntimeException("Cannot set socket parameters", e);
             }
             
+            // generate transfer events to mesaure bandwidth usage
+            MeasuredInputStream mis = new MeasuredInputStream(request.getInputStream(), stream);
+            
             // creating input reader
-            StreamInput streamInput = new StreamInput(stream, request.getInputStream());
+            StreamInput streamInput = new StreamInput(stream, mis);
             
             /*
              * Start publishing
@@ -192,9 +195,13 @@ class StreamingServer {
 
             // setting rsponse content-type
             response.setParameter(STR_CONTENT_TYPE, "video/webm");
-
+            
+            // log transfer events (bandwidth usage)
+            final int PACKET_SIZE = 24 * 1024;
+            MeasuredOutputStream mos = new MeasuredOutputStream(response.getOutputStream(), stream, PACKET_SIZE);
+            
             // create a client
-            StreamClient client = new StreamClient(stream, response.getOutputStream());
+            StreamClient client = new StreamClient(stream, mos);
             
             // serving the request (from this thread)
             client.run();
@@ -270,7 +277,7 @@ class StreamingServer {
                 response.getOutputStream().write(header, 0, header.length);
                 
                 // sending data
-                                ByteBuffer[] dataBuffers = fragment.getBuffers();
+                ByteBuffer[] dataBuffers = fragment.getBuffers();
                 response.getOutputStream().write(dataBuffers[0].array(), fragment.getKeyframeOffset(), fragment.getKeyframeLength());
             
             } catch (Exception e) {
@@ -286,8 +293,6 @@ class StreamingServer {
         
         public void serve(HTTPRequest request, HTTPResponse response) throws HTTPException {
             
-            System.out.println(0);
-
             // the part of the path after the resource's path
             int resLength = request.getResourcePath().length();
             String requestPath = request.getPathName();
@@ -316,12 +321,8 @@ class StreamingServer {
             // setting rsponse content-type
             response.setParameter(STR_CONTENT_TYPE, "text/plain");
 
-            System.out.println(1);
-
             // get evet dispatcher (if no current one then it is created)
             EventDispatcher dispatcher = stream.getEventDispatcher();
-            
-            System.out.println(2);
             
             // creating analizer
             EventAnalizer analizer = new EventAnalizer(stream, dispatcher, response.getOutputStream());

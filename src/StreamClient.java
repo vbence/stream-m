@@ -93,14 +93,11 @@ class StreamClient {
                 // send the fragment data to the client
                 try {
                     
-                    final int PACKET_SIZE = 24 * 1024;
-                    MeasuredOutputStream mos = new MeasuredOutputStream(output, stream, PACKET_SIZE);
-
                     ByteBuffer[] dataBuffers = fragment.getBuffers();
                     for (ByteBuffer buffer : dataBuffers) {
                         
                         // writing data packet
-                        mos.write(buffer.array(), buffer.position(), buffer.limit());
+                        output.write(buffer.array(), buffer.position(), buffer.limit());
 
                     }
                     

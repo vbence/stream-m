@@ -38,10 +38,8 @@ class StreamInput {
         // notification about starting the input process
         stream.postEvent(new ServerEvent(this, stream, ServerEvent.INPUT_START));
         
-        MeasuredInputStream mis = new MeasuredInputStream(input, stream);
-        
         Buffer buffer = new Buffer(BUFFER_SIZE);
-        Feeder feeder = new Feeder(buffer, mis);
+        Feeder feeder = new Feeder(buffer, input);
         
         HeaderDetectionState hds = new HeaderDetectionState(this, stream);
         feeder.feedTo(hds);
