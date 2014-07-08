@@ -21,6 +21,7 @@ package org.czentral.incubator.streamm.web;
 
 import java.net.Socket;
 import java.util.Map;
+import java.util.Properties;
 import org.czentral.incubator.streamm.ControlledStream;
 import org.czentral.incubator.streamm.MeasuredInputStream;
 import org.czentral.incubator.streamm.StreamInput;
@@ -35,12 +36,12 @@ import org.czentral.minihttp.HTTPResponse;
  */
 public class PublisherResource implements HTTPResource {
     
-    protected Map<String, String> settings;
+    protected Properties props;
 
     protected Map<String, ControlledStream> streams;
 
-    public PublisherResource(Map<String, String> settings, Map<String, ControlledStream> streams) {
-        this.settings = settings;
+    public PublisherResource(Properties props, Map<String, ControlledStream> streams) {
+        this.props = props;
         this.streams = streams;
     }
 
@@ -54,7 +55,7 @@ public class PublisherResource implements HTTPResource {
         // stream ID
         String streamID = requestPath.substring(resLength + 1);
         // is a stream with that name defined?
-        if (settings.get("streams." + streamID) == null) {
+        if (props.getProperty("streams." + streamID) == null) {
             throw new HTTPException(403, "Stream Not Registered");
         }
         // check password
@@ -62,7 +63,7 @@ public class PublisherResource implements HTTPResource {
         if (requestPassword == null) {
             throw new HTTPException(403, "Authentication failed: No password");
         }
-        if (!requestPassword.equals(settings.get("streams." + streamID + ".password"))) {
+        if (!requestPassword.equals(props.getProperty("streams." + streamID + ".password"))) {
             throw new HTTPException(403, "Authentication failed: Wrong password");
         }
         // stopping stream if already isRunning
@@ -71,7 +72,7 @@ public class PublisherResource implements HTTPResource {
             stream.stop();
         }
         // creating new Sream instance
-        stream = new ControlledStream(Integer.parseInt(settings.get("streams." + streamID + ".limit")));
+        stream = new ControlledStream(Integer.parseInt(props.getProperty("streams." + streamID + ".limit")));
         // put stream to in the collection
         streams.put(streamID, stream);
         // setting socket parameters

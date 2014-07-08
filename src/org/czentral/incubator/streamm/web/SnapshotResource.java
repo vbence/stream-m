@@ -20,6 +20,7 @@
 package org.czentral.incubator.streamm.web;
 
 import java.util.Map;
+import java.util.Properties;
 import org.czentral.incubator.streamm.ControlledStream;
 import org.czentral.incubator.streamm.MatroskaFragment;
 import org.czentral.incubator.streamm.Stream;
@@ -27,7 +28,6 @@ import org.czentral.minihttp.HTTPException;
 import org.czentral.minihttp.HTTPRequest;
 import org.czentral.minihttp.HTTPResource;
 import org.czentral.minihttp.HTTPResponse;
-import org.czentral.util.stream.Buffer;
 
 /**
  *
@@ -37,12 +37,12 @@ public class SnapshotResource implements HTTPResource {
 
     private final String STR_CONTENT_TYPE = "Content-type";
     
-    protected Map<String, String> settings;
+    protected Properties props;
 
     protected Map<String, ControlledStream> streams;
 
-    public SnapshotResource(Map<String, String> settings, Map<String, ControlledStream> streams) {
-        this.settings = settings;
+    public SnapshotResource(Properties props, Map<String, ControlledStream> streams) {
+        this.props = props;
         this.streams = streams;
     }
 
@@ -56,7 +56,7 @@ public class SnapshotResource implements HTTPResource {
         // Stream ID
         String streamID = requestPath.substring(resLength + 1);
         // is a stream with that Stream ID defined?
-        if (settings.get("streams." + streamID) == null) {
+        if (props.getProperty("streams." + streamID) == null) {
             throw new HTTPException(404, "Stream Not Registered");
         }
         // getting stream

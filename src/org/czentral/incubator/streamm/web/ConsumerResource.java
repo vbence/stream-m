@@ -20,6 +20,7 @@
 package org.czentral.incubator.streamm.web;
 
 import java.util.Map;
+import java.util.Properties;
 import org.czentral.incubator.streamm.ControlledStream;
 import org.czentral.incubator.streamm.MeasuredOutputStream;
 import org.czentral.incubator.streamm.StreamClient;
@@ -36,12 +37,12 @@ public class ConsumerResource implements HTTPResource {
     
     private final String STR_CONTENT_TYPE = "Content-type";
     
-    protected Map<String, String> settings;
+    protected Properties props;
 
     protected Map<String, ControlledStream> streams;
 
-    public ConsumerResource(Map<String, String> settings, Map<String, ControlledStream> streams) {
-        this.settings = settings;
+    public ConsumerResource(Properties props, Map<String, ControlledStream> streams) {
+        this.props = props;
         this.streams = streams;
     }
     
@@ -58,7 +59,7 @@ public class ConsumerResource implements HTTPResource {
         String streamID = requestPath.substring(resLength + 1);
         
         // is a stream with that Stream ID defined?
-        if (settings.get("streams." + streamID) == null) {
+        if (props.getProperty("streams." + streamID) == null) {
             throw new HTTPException(404, "Stream Not Registered");
         }
         

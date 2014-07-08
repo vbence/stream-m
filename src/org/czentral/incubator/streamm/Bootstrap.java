@@ -1,5 +1,3 @@
-package org.czentral.incubator.streamm;
-
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -18,6 +16,7 @@ package org.czentral.incubator.streamm;
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+package org.czentral.incubator.streamm;
 
 import org.czentral.incubator.streamm.web.SnapshotResource;
 import org.czentral.incubator.streamm.web.PublisherResource;
@@ -30,8 +29,8 @@ import org.czentral.minihttp.*;
 public class Bootstrap {
     
     // configuration settings
-    private static Map<String, String> settings = new HashMap<String, String>(20);
-        
+    private static Properties props = new Properties();
+    
     // streams by name
     private static Map<String, ControlledStream> streams = new HashMap<String, ControlledStream>();
     
@@ -47,18 +46,8 @@ public class Bootstrap {
         // loading config
         try {
             String filename = args[0];
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.length() == 0 || line.startsWith("#") || line.startsWith(";"))
-                    continue;
-                
-                int pos = line.indexOf("=");
-                if (pos == -1)
-                    throw new RuntimeException("Config lines must vahe a <key> = <value> syntax.");
-                
-                settings.put(line.substring(0, pos).trim(), line.substring(pos + 1).trim());
-            }
+            InputStream in = new FileInputStream(filename);
+            props.load(in);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -67,24 +56,21 @@ public class Bootstrap {
         new Bootstrap().run();
     }
     
-    private static void loadConfig(String filename) {
-    }
-    
     public void run() {
-        String serverPort = settings.get("server.port");
+        String serverPort = props.getProperty("server.port");
         System.out.println("Stating server on port: " + serverPort);
         MiniHTTP server = new MiniHTTP(Integer.parseInt(serverPort));
         
-        PublisherResource publish = new PublisherResource(settings, streams);
+        PublisherResource publish = new PublisherResource(props, streams);
         server.registerResource("/publish", publish);
 
-        ConsumerResource consume = new ConsumerResource(settings, streams);
+        ConsumerResource consume = new ConsumerResource(props, streams);
         server.registerResource("/consume", consume);
 
-        SnapshotResource snapshot = new SnapshotResource(settings, streams);
+        SnapshotResource snapshot = new SnapshotResource(props, streams);
         server.registerResource("/snapshot", snapshot);
 
-        InfoResource info = new InfoResource(settings, streams);
+        InfoResource info = new InfoResource(props, streams);
         server.registerResource("/info", info);
         
         /*

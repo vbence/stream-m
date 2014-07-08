@@ -20,6 +20,7 @@
 package org.czentral.incubator.streamm.web;
 
 import java.util.Map;
+import java.util.Properties;
 import org.czentral.event.EventDispatcher;
 import org.czentral.incubator.streamm.ControlledStream;
 import org.czentral.incubator.streamm.EventAnalizer;
@@ -36,12 +37,12 @@ public class InfoResource implements HTTPResource {
     
     private final String STR_CONTENT_TYPE = "Content-type";
     
-    protected Map<String, String> settings;
+    protected Properties props;
 
     protected Map<String, ControlledStream> streams;
 
-    public InfoResource(Map<String, String> settings, Map<String, ControlledStream> streams) {
-        this.settings = settings;
+    public InfoResource(Properties props, Map<String, ControlledStream> streams) {
+        this.props = props;
         this.streams = streams;
     }
 
@@ -55,7 +56,7 @@ public class InfoResource implements HTTPResource {
         // stream ID
         String streamID = requestPath.substring(resLength + 1);
         // is a stream with that name defined?
-        if (settings.get("streams." + streamID) == null) {
+        if (props.getProperty("streams." + streamID) == null) {
             throw new HTTPException(404, "Stream Not Registered");
         }
         // check password
@@ -63,7 +64,7 @@ public class InfoResource implements HTTPResource {
         if (requestPassword == null) {
             throw new HTTPException(403, "Authentication failed: No password");
         }
-        if (!requestPassword.equals(settings.get("streams." + streamID + ".password"))) {
+        if (!requestPassword.equals(props.getProperty("streams." + streamID + ".password"))) {
             throw new HTTPException(403, "Authentication failed: Wrong password");
         }
         // getting stream
