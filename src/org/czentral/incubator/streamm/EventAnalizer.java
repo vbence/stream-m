@@ -19,6 +19,7 @@ package org.czentral.incubator.streamm;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import org.czentral.util.stream.TransferEvent;
 import java.io.OutputStream;
 import java.util.Date;
 import org.czentral.event.Event;
@@ -145,7 +146,7 @@ public class EventAnalizer implements EventListener {
         }
         
         private void sendData(long time, int value) {
-            StringBuffer sb = new StringBuffer(30);
+            StringBuilder sb = new StringBuilder(30);
             
             sb.append("{cls:2,type:");
             sb.append(id);

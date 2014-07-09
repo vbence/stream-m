@@ -23,7 +23,7 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.Properties;
 import org.czentral.incubator.streamm.ControlledStream;
-import org.czentral.incubator.streamm.MeasuredInputStream;
+import org.czentral.util.stream.MeasuredInputStream;
 import org.czentral.incubator.streamm.StreamInput;
 import org.czentral.minihttp.HTTPException;
 import org.czentral.minihttp.HTTPRequest;

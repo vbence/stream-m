@@ -1,5 +1,3 @@
-package org.czentral.incubator.streamm;
-
 /*
  * This file is part of the "stream-m" software. An HTML5 compatible live
  * streaming server.
@@ -19,9 +17,13 @@ package org.czentral.incubator.streamm;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+package org.czentral.util.stream;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
+import org.czentral.event.EventSource;
+import org.czentral.incubator.streamm.Stream;
 
 /**
  * Decorates an OutputStream object, generating TransferEvents on writes. Data
@@ -38,7 +40,7 @@ public class MeasuredOutputStream extends OutputStream {
     private final int DEFAULT_PACKET_SIZE = 64 * 1024;
 
     protected OutputStream base;
-    protected Stream stream;
+    protected EventSource source;
     
     protected int chunkSize = DEFAULT_PACKET_SIZE;
     
@@ -46,11 +48,11 @@ public class MeasuredOutputStream extends OutputStream {
      * Wraps the given output stream. Uses default packet size.
      * 
      * @param base Existing output stream to use.
-     * @param stream Stream object, works as origination of events.
+     * @param source Object to work as event source.
      */
-    public MeasuredOutputStream(OutputStream base, Stream stream) {
+    public MeasuredOutputStream(OutputStream base, EventSource source) {
         this.base = base;
-        this.stream = stream;
+        this.source = source;
     }
     
     /**
@@ -93,7 +95,7 @@ public class MeasuredOutputStream extends OutputStream {
             base.write(buffer, offset, fragLength);
 
             // notification about the transfer
-            stream.postEvent(new TransferEvent(this, stream, TransferEvent.STREAM_OUTPUT, fragLength, new Date().getTime() - transferStart));
+            source.postEvent(new TransferEvent(source, TransferEvent.STREAM_OUTPUT, fragLength, new Date().getTime() - transferStart));
 
             // next packet (chunk) start
             offset += fragLength;

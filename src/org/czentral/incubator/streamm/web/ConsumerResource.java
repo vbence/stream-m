@@ -22,7 +22,7 @@ package org.czentral.incubator.streamm.web;
 import java.util.Map;
 import java.util.Properties;
 import org.czentral.incubator.streamm.ControlledStream;
-import org.czentral.incubator.streamm.MeasuredOutputStream;
+import org.czentral.util.stream.MeasuredOutputStream;
 import org.czentral.incubator.streamm.StreamClient;
 import org.czentral.minihttp.HTTPException;
 import org.czentral.minihttp.HTTPRequest;

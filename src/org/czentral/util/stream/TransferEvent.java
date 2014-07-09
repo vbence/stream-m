@@ -1,5 +1,3 @@
-package org.czentral.incubator.streamm;
-
 /*
     This file is part of "stream.m" software, a video broadcasting tool
     compatible with Google's WebM format.
@@ -19,7 +17,11 @@ package org.czentral.incubator.streamm;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-public class TransferEvent extends ServerEvent {
+package org.czentral.util.stream;
+
+import org.czentral.event.EventImpl;
+
+public class TransferEvent extends EventImpl {
     
     public static final int STREAM_INPUT = 1;
     public static final int STREAM_OUTPUT = 2;
@@ -27,8 +29,8 @@ public class TransferEvent extends ServerEvent {
     private int bytes;
     private long duration;
     
-    public TransferEvent(Object source, Object sourceStream, int type, int bytes, long duration) {
-        super(source, sourceStream, type);
+    public TransferEvent(Object source, int type, int bytes, long duration) {
+        super(source, type);
         this.bytes = bytes;
         this.duration = duration;
     }

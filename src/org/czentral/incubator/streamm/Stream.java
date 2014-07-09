@@ -19,9 +19,11 @@ package org.czentral.incubator.streamm;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.czentral.event.GeneralEventProducer;
 
-public class Stream extends GeneralEventProducer {
+
+import org.czentral.event.EventSourceImpl;
+
+public class Stream extends EventSourceImpl {
     
     private MatroskaFragment fragment;
     private int fragmentAge;

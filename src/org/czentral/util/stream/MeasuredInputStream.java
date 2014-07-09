@@ -1,7 +1,5 @@
-package org.czentral.incubator.streamm;
-
 /*
-    This file is part of "stream.m" software, a video broadcasting tool
+    This file is part of "source.m" software, a video broadcasting tool
     compatible with Google's WebM format.
     Copyright (C) 2011 Varga Bence
 
@@ -19,10 +17,13 @@ package org.czentral.incubator.streamm;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+package org.czentral.util.stream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.util.Date;
+import org.czentral.event.EventSource;
 
 /**
  *
@@ -31,11 +32,11 @@ import java.util.Date;
 public class MeasuredInputStream extends InputStream {
     
     protected final InputStream base;
-    protected final Stream stream;
+    protected final EventSource source;
     
-    public MeasuredInputStream(InputStream base, Stream stream) {
+    public MeasuredInputStream(InputStream base, EventSource source) {
         this.base = base;
-        this.stream = stream;
+        this.source = source;
     }
 
     @Override
@@ -63,7 +64,7 @@ public class MeasuredInputStream extends InputStream {
         }
 
         // notification about the transfer
-        stream.postEvent(new TransferEvent(this, stream, TransferEvent.STREAM_INPUT, numBytes, new Date().getTime() - transferStart));
+        source.postEvent(new TransferEvent(source, TransferEvent.STREAM_INPUT, numBytes, new Date().getTime() - transferStart));
         
         return numBytes;
     }
