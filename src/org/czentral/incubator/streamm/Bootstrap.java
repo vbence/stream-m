@@ -25,6 +25,10 @@ import org.czentral.incubator.streamm.web.InfoResource;
 import java.io.*;
 import java.util.*;
 import org.czentral.minihttp.*;
+import org.czentral.minirtmp.ApplicationLibrary;
+import org.czentral.minirtmp.ApplicationLibraryImpl;
+import org.czentral.minirtmp.MiniRTMP;
+import org.czentral.minirtmp.ApplicationInstance;
 
 public class Bootstrap {
     
@@ -62,35 +66,45 @@ public class Bootstrap {
     }
     
     public void run() {
-        String serverPort = props.getProperty("server.port");
-        System.out.println("Stating server on port: " + serverPort);
-        MiniHTTP server = new MiniHTTP(Integer.parseInt(serverPort));
-        
-        PublisherResource publish = new PublisherResource(props, streams);
-        server.registerResource("/publish", publish);
+        {
+            String serverPort = props.getProperty("server.port");
+            System.out.println("Stating server on port: " + serverPort);
+            MiniHTTP server = new MiniHTTP(Integer.parseInt(serverPort));
 
-        ConsumerResource consume = new ConsumerResource(props, streams);
-        server.registerResource("/consume", consume);
+            PublisherResource publish = new PublisherResource(props, streams);
+            server.registerResource("/publish", publish);
 
-        SnapshotResource snapshot = new SnapshotResource(props, streams);
-        server.registerResource("/snapshot", snapshot);
+            ConsumerResource consume = new ConsumerResource(props, streams);
+            server.registerResource("/consume", consume);
 
-        InfoResource info = new InfoResource(props, streams);
-        server.registerResource("/info", info);
-        
-        /*
-        FileResource script = new FileResource("script.js");
-        server.registerResource("/script.js", script);
-        */
-        
-        try {
-            HTTPZipResource console = new HTTPZipResource("console.zip");
-            server.registerResource("/console", console);
-        } catch (Exception e) {
-            // throw new RuntimeException(e);
+            SnapshotResource snapshot = new SnapshotResource(props, streams);
+            server.registerResource("/snapshot", snapshot);
+
+            InfoResource info = new InfoResource(props, streams);
+            server.registerResource("/info", info);
+
+            /*
+            FileResource script = new FileResource("script.js");
+            server.registerResource("/script.js", script);
+            */
+
+            try {
+                HTTPZipResource console = new HTTPZipResource("console.zip");
+                server.registerResource("/console", console);
+            } catch (Exception e) {
+                // throw new RuntimeException(e);
+            }
+
+            server.start();
         }
         
-        server.start();
+        {
+            ApplicationLibraryImpl library = new ApplicationLibraryImpl();
+            library.registerApplication("publish", new PublisherApp(props, streams));
+            MiniRTMP server = new MiniRTMP(8081, library);
+            server.start();
+        }
+    
     }
 
 }
