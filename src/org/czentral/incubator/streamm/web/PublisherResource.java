@@ -36,6 +36,8 @@ import org.czentral.minihttp.HTTPResponse;
  */
 public class PublisherResource implements HTTPResource {
     
+    private final String MIME_TYPE_WEBM = "video/webm";
+    
     protected Properties props;
 
     protected Map<String, ControlledStream> streams;
@@ -73,6 +75,7 @@ public class PublisherResource implements HTTPResource {
         }
         // creating new Sream instance
         stream = new ControlledStream(Integer.parseInt(props.getProperty("streams." + streamID + ".limit")));
+        stream.setMimeType(MIME_TYPE_WEBM);
         // put stream to in the collection
         streams.put(streamID, stream);
         // setting socket parameters

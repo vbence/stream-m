@@ -75,7 +75,7 @@ public class ConsumerResource implements HTTPResource {
         }
         
         // setting rsponse content-type
-        response.setParameter(STR_CONTENT_TYPE, "video/webm");
+        response.setParameter(STR_CONTENT_TYPE, stream.getMimeType());
 
         // log transfer events (bandwidth usage)
         final int PACKET_SIZE = 24 * 1024;

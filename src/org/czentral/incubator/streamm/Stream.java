@@ -30,6 +30,8 @@ public class Stream extends EventSourceImpl {
     
     private byte[] header;
     
+    private String mimeType = "application/octet-stream";
+    
     private boolean runs = true;
     
     public synchronized boolean isRunning() {
@@ -54,6 +56,14 @@ public class Stream extends EventSourceImpl {
     
     public synchronized void setHeader(byte[] newHeader) {
         header = newHeader;
+    }
+
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
     }
     
     public synchronized void pushFragment(MovieFragment newFragment) {
