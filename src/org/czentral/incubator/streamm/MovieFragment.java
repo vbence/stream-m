@@ -27,8 +27,8 @@ import org.czentral.util.stream.Buffer;
  */
 public interface MovieFragment {
 
-    Buffer[] getBuffers();
+    public Buffer[] getBuffers();
 
-    int length();
+    public int length();
     
 }
