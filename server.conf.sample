@@ -5,9 +5,13 @@
 # Syntactic elements (words) can be separated by linear whitepace.
 #
 
-# server.port
-# listening port
-server.port = 8080
+# http.port
+# listening port for the http server
+http.port = 8080
+
+# rtmp.port
+# listening port for the rtmp server
+rtmp.port = 8081
 
 # stream.<streamname>
 # if defined then a stream can be started with this name

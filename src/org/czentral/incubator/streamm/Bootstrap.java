@@ -67,9 +67,12 @@ public class Bootstrap {
     
     public void run() {
         {
-            String serverPort = props.getProperty("server.port");
-            System.out.println("Stating server on port: " + serverPort);
-            MiniHTTP server = new MiniHTTP(Integer.parseInt(serverPort));
+            String httpPortProp = props.getProperty("http.port");
+            if (httpPortProp == null) {
+                throw new RuntimeException("Config option not found: http.port.");
+            }
+            int httpPort = Integer.parseInt(httpPortProp);
+            MiniHTTP server = new MiniHTTP(httpPort);
 
             PublisherResource publish = new PublisherResource(props, streams);
             server.registerResource("/publish", publish);
@@ -101,7 +104,14 @@ public class Bootstrap {
         {
             ApplicationLibraryImpl library = new ApplicationLibraryImpl();
             library.registerApplication("publish", new PublisherApp(props, streams));
-            MiniRTMP server = new MiniRTMP(8081, library);
+
+            String rtmpPortProp = props.getProperty("rtmp.port");
+            if (rtmpPortProp == null) {
+                throw new RuntimeException("Config option not found: http.port.");
+            }
+            int rtmpPort = Integer.parseInt(rtmpPortProp);
+            MiniRTMP server = new MiniRTMP(rtmpPort, library);
+            
             server.start();
         }
     
