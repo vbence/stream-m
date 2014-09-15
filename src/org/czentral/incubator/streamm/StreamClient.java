@@ -91,7 +91,7 @@ public class StreamClient {
                 myAge = streamAge;
                 
                 // getting current movie fragment
-                MatroskaFragment fragment = stream.getFragment();
+                MovieFragment fragment = stream.getFragment();
                 
                 // send the fragment data to the client
                 try {

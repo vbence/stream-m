@@ -21,7 +21,7 @@ package org.czentral.incubator.streamm;
 
 import org.czentral.util.stream.Buffer;
 
-public class MatroskaFragment {
+public class MatroskaFragment implements MovieFragment {
     
     private final int INITIAL_CLUSTER_LENGTH = 9;
     private final int TIMECODE_LAST_OFFSET = 18;
@@ -92,11 +92,13 @@ public class MatroskaFragment {
         dataLength += length;
     }
     
+    @Override
     public Buffer[] getBuffers() {
         Buffer[] result = { new Buffer(data, 0, dataLength) };
         return result;
     }
     
+    @Override
     public int length() {
         return dataLength;
     }

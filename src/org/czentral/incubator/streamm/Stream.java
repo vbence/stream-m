@@ -25,7 +25,7 @@ import org.czentral.event.EventSourceImpl;
 
 public class Stream extends EventSourceImpl {
     
-    private MatroskaFragment fragment;
+    private MovieFragment fragment;
     private int fragmentAge;
     
     private byte[] header;
@@ -44,7 +44,7 @@ public class Stream extends EventSourceImpl {
         return fragmentAge;
     }
     
-    public synchronized MatroskaFragment getFragment() {
+    public synchronized MovieFragment getFragment() {
         return fragment;
     }
     
@@ -56,7 +56,7 @@ public class Stream extends EventSourceImpl {
         header = newHeader;
     }
     
-    public synchronized void pushFragment(MatroskaFragment newFragment) {
+    public synchronized void pushFragment(MovieFragment newFragment) {
         if (fragmentAge == 0)
             postEvent(new ServerEvent(this, this, ServerEvent.INPUT_FIRST_FRAGMENT));
         fragment = newFragment;

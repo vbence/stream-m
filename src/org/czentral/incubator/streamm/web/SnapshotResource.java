@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Properties;
 import org.czentral.incubator.streamm.ControlledStream;
 import org.czentral.incubator.streamm.MatroskaFragment;
+import org.czentral.incubator.streamm.MovieFragment;
 import org.czentral.incubator.streamm.Stream;
 import org.czentral.minihttp.HTTPException;
 import org.czentral.minihttp.HTTPRequest;
@@ -67,7 +68,10 @@ public class SnapshotResource implements HTTPResource {
         // setting rsponse content-type
         response.setParameter(STR_CONTENT_TYPE, "image/webp");
         // getting current fragment
-        MatroskaFragment fragment = stream.getFragment();
+        if (!(stream.getFragment() instanceof MatroskaFragment)) {
+            throw new HTTPException(404, "Not a Matroska stream.");
+        }
+        MatroskaFragment fragment = (MatroskaFragment)stream.getFragment();
         // check if there is a fragment available
         if (fragment == null) {
             throw new HTTPException(404, "No Fragment Found");
