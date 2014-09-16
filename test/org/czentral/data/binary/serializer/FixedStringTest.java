@@ -107,41 +107,5 @@ public class FixedStringTest {
         
         instance.serialize(o, context);
     }
-        
-    class BitfieldImplementation implements BitField {
-        
-        int bitLength = -1;
-
-        int byteLength = -1;
-
-        @Override
-        public int byteLength() {
-            return byteLength;
-        }
-
-        public void setByteLength(int byteLength) {
-            this.byteLength = byteLength;
-        }
-
-        @Override
-        public int bitLength() {
-            return bitLength;
-        }
-
-        public void setBitLength(int bitLength) {
-            this.bitLength = bitLength;
-        }
-
-        @Override
-        public Class classOverride() {
-            return Void.class;
-        }
-        
-        @Override
-        public Class<? extends java.lang.annotation.Annotation> annotationType() {
-            return BitField.class;
-        }
-        
-    }
     
 }
