@@ -52,11 +52,11 @@ class AnnotatedClass implements Serializer {
     
     protected final String PREFIX_SET = "set";
     
-    protected Map<Class,Map<String,AbstractPropertyAccessor>> accessorCache = new WeakHashMap<>();
+    protected Map<Class,Map<String,AbstractPropertyAccessor>> accessorCache = new HashMap<>();
     
-    protected Map<Class,Map<Class,List<Class>>> listenerClassCache = new WeakHashMap<>();
+    protected Map<Class,Map<Class,List<Class>>> listenerClassCache = new HashMap<>();
 
-    protected Map<Class,Object> listenerCache = new WeakHashMap<>();
+    protected Map<Class,Object> listenerCache = new HashMap<>();
     
 
     @Override
