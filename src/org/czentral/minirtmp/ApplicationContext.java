@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class ApplicationContext implements ChunkProcessor {
     
-    protected Map<Integer, byte[]> assemblyBuffers = new HashMap<>();
+    protected Map<Integer, AssemblyBuffer> assemblyBuffers = new HashMap<>();
     
     protected OutputStream outputStream;
     
@@ -92,7 +92,7 @@ public class ApplicationContext implements ChunkProcessor {
         
         boolean fragmented = (mi.length > payloadLength);
         if (fragmented) {
-            byte[] assemblyBuffer = assemblyBuffers.get(mi.streamID);
+            AssemblyBuffer assemblyBuffer = assemblyBuffers.get(mi.chunkStreamID);
             
             boolean newFragment = (mi.offset == 0);
             if (newFragment) {
@@ -109,20 +109,22 @@ public class ApplicationContext implements ChunkProcessor {
                     throw new RuntimeException("Resource limit reached: too many messages to assemble.");
                 }
                 
-                assemblyBuffer = new byte[mi.length];
-                assemblyBuffers.put(mi.streamID, assemblyBuffer);
+                assemblyBuffer = new AssemblyBuffer(mi.length);
+                assemblyBuffers.put(mi.chunkStreamID, assemblyBuffer);
             }
             
-            System.arraycopy(readBuffer, payloadOffset, assemblyBuffer, mi.offset, payloadLength);
+            System.arraycopy(readBuffer, payloadOffset, assemblyBuffer.array, mi.offset, payloadLength);
 
             boolean assembled = (mi.offset + payloadLength >= mi.length);
             if (assembled) {
-                processMessage(mi, assemblyBuffer, 0, mi.length);
-                assemblyBuffers.put(mi.streamID, null);
+                processMessage(mi, assemblyBuffer.array, 0, mi.length);
+                assemblyBuffers.put(mi.chunkStreamID, null);
             }
             
         } else {
-            processMessage(mi, readBuffer, payloadOffset, payloadLength);
+            byte[] resultBuffer = new byte[payloadLength];
+            System.arraycopy(readBuffer, payloadOffset, resultBuffer, 0, payloadLength);
+            processMessage(mi, resultBuffer, 0, resultBuffer.length);
         }
         //System.err.print(HexDump.prettyPrintHex(buffer, payloadOffset, Math.min(16, payloadLength)));
     }
@@ -149,7 +151,7 @@ public class ApplicationContext implements ChunkProcessor {
                         response.writeString("_error");
                         response.writeMixed(null);
                         response.writeMixed(null);
-                        writeCommand(mi.streamID, response);
+                        writeCommand(mi.chunkStreamID, response);
                         return;
                     }
                     applicationInstance.onConnect(this);
@@ -162,7 +164,7 @@ public class ApplicationContext implements ChunkProcessor {
                     response.writeString("_error");
                     response.writeMixed(null);
                     response.writeMixed(null);
-                    writeCommand(mi.streamID, response);
+                    writeCommand(mi.chunkStreamID, response);
                 }
             } else {
                 applicationInstance.invokeCommand(mi, command);
@@ -223,6 +225,14 @@ public class ApplicationContext implements ChunkProcessor {
             //System.out.write(response.getBuffer(), 0, responseLength);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+    
+    private static class AssemblyBuffer {
+        public static byte[] array;
+
+        public AssemblyBuffer(int size) {
+            array = new byte[size];
         }
     }
     
