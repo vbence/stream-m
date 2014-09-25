@@ -41,9 +41,9 @@ import org.czentral.data.binary.annotation.BitTable;
         , "height"})
 public class TrackHeaderBox extends FullBox {
     
-    public static int FLAG_TRACK_ENABLED = 0x01;
-    public static int FLAG_TRACK_IN_MOVIE = 0x02;
-    public static int FLAG_TRACK_IN_PREVIEW = 0x04;
+    public static final int FLAG_TRACK_ENABLED = 0x01;
+    public static final int FLAG_TRACK_IN_MOVIE = 0x02;
+    public static final int FLAG_TRACK_IN_PREVIEW = 0x04;
     
     long creationTime;
     long modificationTime;

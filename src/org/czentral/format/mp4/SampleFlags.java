@@ -35,6 +35,10 @@ import org.czentral.data.binary.annotation.BitTable;
         , "sampleDegradationPriority"})
 public class SampleFlags {
     
+    public static final int DEPENDS_ON_UNKNOWN = 0;
+    public static final int DEPENDS_ON_OTHERS = 1;
+    public static final int DEPENDS_ON_NO_OTHERS = 2;
+    
     @BitField(bitLength = 6)
     public final int reserved1 = 0;
     
