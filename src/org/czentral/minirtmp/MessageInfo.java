@@ -27,12 +27,13 @@ public class MessageInfo {
     public int length;
     public int offset;
     public int type;
-    public int streamID;
+    public int chunkStreamID;
+    public int messageStreamID;
     public long absoluteTimestamp;
     public long relativeTimestamp;
 
-    public MessageInfo(int streamID, int type, int length) {
-        this.streamID = streamID;
+    public MessageInfo(int chunkStreamID, int type, int length) {
+        this.chunkStreamID = chunkStreamID;
         this.type = type;
         this.length = length;
         offset = 0;

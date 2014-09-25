@@ -121,8 +121,27 @@ class RTMPStreamProcessor implements Processor {
             if (lastMessage != null && lastMessage.offset > 0 && lastMessage.offset < lastMessage.length) {
                 throw new RuntimeException("Unsupported feature encountered: LONG_HEAD_INSIDE_FRAGENT.");
             }
-            
+
+            int msid = 0;
+            if (headLength >= 11) {
+                msid = (buffer[offset + 7] & 0xff) << 24 | (buffer[offset + 8] & 0xff) << 16 | (buffer[offset + 9] & 0xff) << 8 | (buffer[offset + 10] & 0xff);
+            } else {
+                if (lastMessage != null) {
+                    msid = lastMessage.messageStreamID; 
+                }
+            }
+
             lastMessage = new MessageInfo(sid, type, fullLength);
+            
+            lastMessage.messageStreamID = msid;
+            
+            int timeStamp = (buffer[offset + 0] & 0xff) << 16 | (buffer[offset + 1] & 0xff) << 8 | (buffer[offset + 2] & 0xff);
+            if (headLength >= 11) {
+                lastMessage.absoluteTimestamp = timeStamp;
+            } else {
+                lastMessage.relativeTimestamp = timeStamp;
+            }
+            
             lastMessages.put(sid, lastMessage);
             if (lastMessages.size() > limit.chunkStreamCount) {
                 throw new RuntimeException("Unsupported feature encountered: TOO_MANY_STREAMS. Current limit is " + limit.chunkStreamCount + ".");
