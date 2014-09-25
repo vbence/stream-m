@@ -30,65 +30,92 @@ public class StreamClient {
     
     private boolean runs = true;
     
-    private long offset = 0;
-    private int fragmentSequence = 1;
+    
+    private boolean sendHeader = true;
+    
+    private int requestedFragmentSequence = -1;
+    
+    private boolean sendSingleFragment = false;
+    
     
     public StreamClient(Stream stream, OutputStream output) {
         this.stream = stream;
         this.output = output;
     }
+
+    
+    public void setSendHeader(boolean sendHeader) {
+        this.sendHeader = sendHeader;
+    }
+
+    public void setRequestedFragmentSequence(int requestedFragmentSequence) {
+        this.requestedFragmentSequence = requestedFragmentSequence;
+    }
+
+    public void setSendSingleFragment(boolean sendSingleFragment) {
+        this.sendSingleFragment = sendSingleFragment;
+    }
+
     
     public void run() {
         
         // report the starting of this client
         stream.postEvent(new ServerEvent(this, stream, ServerEvent.CLIET_START));
         
-        // waiting for header
-        byte[] header = stream.getHeader();
-        while (header == null && stream.isRunning()) {
+        if (sendHeader) {
             
-            // sleeping 200 ms
+            // waiting for header
+            byte[] header = stream.getHeader();
+            while (header == null && stream.isRunning()) {
+
+                // sleeping 200 ms
+                try {
+                    Thread.sleep(200);
+                } catch (Exception e) {
+                }
+
+                header = stream.getHeader();
+            }
+
+            // writing header
             try {
-                Thread.sleep(200);
+                output.write(header);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+
+            /* Web browsers may try to detect some features of the server and open
+             * multiple connections. They may close the connection eventually so
+             * we wait for a little bit to ensure this request is serious. (And the
+             * client needs more than just the header).
+             */
+
+            // sleeping 1000 ms
+            try {
+                Thread.sleep(1000);
             } catch (Exception e) {
             }
             
-            header = stream.getHeader();
-        }
-        
-        // writing header
-        try {
-            output.write(header);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        
-        /* Web browsers may try to detect some features of the server and open
-         * multiple connections. They may close the connection eventually so
-         * we wait for a little bit to ensure this request is serious. (And the
-         * client needs more than just the header).
-         */
-        
-        // sleeping 1000 ms
-        try {
-            Thread.sleep(1000);
-        } catch (Exception e) {
         }
         
         // sending fragments
-        int myAge = 0;
+        int nextSequence = requestedFragmentSequence;
         while (runs && stream.isRunning()) {
             
+            boolean fragmentSent = false;
+                    
             // while there is a new fragment is available
             int streamAge;
-            while (runs && stream.isRunning() && myAge < (streamAge = stream.getFragmentAge())) {
+            while (runs 
+                    && stream.isRunning()
+                    && nextSequence <= (streamAge = stream.getFragmentAge())) {
                 
                 // notification if a fragment was skipped
-                if (myAge > 0 && streamAge - myAge > 1)
+                if (nextSequence > 0 && streamAge - nextSequence > 1)
                     stream.postEvent(new ServerEvent(this, stream, ServerEvent.CLIET_FRAGMENT_SKIP));
                 
-                myAge = streamAge;
+                nextSequence = streamAge + 1;
                 
                 // getting current movie fragment
                 MovieFragment fragment = stream.getFragment();
@@ -104,17 +131,27 @@ public class StreamClient {
 
                     }
                     
+                    fragmentSent = true;
+                    
+                    // only one fragment requested: 
+                    if (sendSingleFragment) {
+                        runs = false;
+                        continue;
+                    }
+            
                 } catch (Exception e) {
                     
                     // closed connection
                     runs = false;
                 }
             }
-            
+                        
             // currently no new fragment, sleeping 200 ms
-            try {
-                Thread.sleep(200);
-            } catch (Exception e) {
+            if (!fragmentSent) {
+                try {
+                    Thread.sleep(200);
+                } catch (Exception e) {
+                }
             }
             
         }

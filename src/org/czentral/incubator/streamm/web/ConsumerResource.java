@@ -83,6 +83,24 @@ public class ConsumerResource implements HTTPResource {
         
         // create a client
         StreamClient client = new StreamClient(stream, mos);
+
+        // whether to send header
+        String sendHeaderParam = request.getParameter("sendHeader");
+        if ("0".equals(sendHeaderParam) || "false".equals(sendHeaderParam)) {
+            client.setSendHeader(false);
+        }
+        
+        // start output with the requested fragment
+        String fragmentSequenceParam = request.getParameter("fragmentSequence");
+        if (fragmentSequenceParam != null) {
+            client.setRequestedFragmentSequence(Integer.parseInt(fragmentSequenceParam, 10));
+        }
+        
+        // send only a single fragment
+        String singleFragmentParam = request.getParameter("singleFragment");
+        if ("1".equals(singleFragmentParam) || "true".equals(singleFragmentParam)) {
+            client.setSendSingleFragment(true);
+        }
         
         // serving the request (from this thread)
         client.run();
