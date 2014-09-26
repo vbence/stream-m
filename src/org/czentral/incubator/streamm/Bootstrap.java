@@ -24,6 +24,7 @@ import org.czentral.incubator.streamm.web.ConsumerResource;
 import org.czentral.incubator.streamm.web.InfoResource;
 import java.io.*;
 import java.util.*;
+import org.czentral.incubator.streamm.web.FileResource;
 import org.czentral.minihttp.*;
 import org.czentral.minirtmp.ApplicationLibrary;
 import org.czentral.minirtmp.ApplicationLibraryImpl;
@@ -31,6 +32,10 @@ import org.czentral.minirtmp.MiniRTMP;
 import org.czentral.minirtmp.ApplicationInstance;
 
 public class Bootstrap {
+    
+    private final String PREFIX_STATIC = "static.";
+    
+    private final String PREFIX_ZIP = "zip.";
     
     // configuration settings
     private Properties props;
@@ -66,6 +71,8 @@ public class Bootstrap {
     }
     
     public void run() {
+        
+        // HTTP
         {
             String httpPortProp = props.getProperty("http.port");
             if (httpPortProp == null) {
@@ -85,22 +92,27 @@ public class Bootstrap {
 
             InfoResource info = new InfoResource(props, streams);
             server.registerResource("/info", info);
-
-            /*
-            FileResource script = new FileResource("script.js");
-            server.registerResource("/script.js", script);
-            */
-
-            try {
-                HTTPZipResource console = new HTTPZipResource("console.zip");
-                server.registerResource("/console", console);
-            } catch (Exception e) {
-                // throw new RuntimeException(e);
+            
+            // mapped static files
+            for (FileShareInfo shareInfo : getSharedResources(PREFIX_STATIC, props)) {
+                FileResource resource = new FileResource(shareInfo.fileName);
+                server.registerResource(shareInfo.url, resource);
             }
 
+            // mapped zip files
+            for (FileShareInfo shareInfo : getSharedResources(PREFIX_ZIP, props)) {
+                try {
+                    HTTPZipResource resource = new HTTPZipResource(shareInfo.fileName);
+                    server.registerResource(shareInfo.url, resource);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            
             server.start();
         }
         
+        // RTMP
         {
             ApplicationLibraryImpl library = new ApplicationLibraryImpl();
             library.registerApplication("publish", new PublisherApp(props, streams));
@@ -116,5 +128,66 @@ public class Bootstrap {
         }
     
     }
+    
+    private static Collection<FileShareInfo> getSharedResources(String prefix, Properties props) {
+        Collection<FileShareInfo> result = new LinkedList<>();
+        
+        for (Map.Entry prop : props.entrySet()) {
+            String key = (String)prop.getKey();
+            if (key.startsWith(prefix)) {
+                
+                String resourceID = key.substring(prefix.length());
+                if (resourceID.contains(".")) {
+                    continue;
+                }
+
+                if (prop.getValue().equals("true")) {
+
+                    String fineNameKey = prefix + resourceID + ".file";
+                    String fileName = props.getProperty(fineNameKey);
+                    if (fileName == null) {
+                        throw new RuntimeException("Expected key not defined: [" + fineNameKey + "].");
+                    }
+
+                    String urlKey = prefix + resourceID + ".url";
+                    String url = props.getProperty(urlKey);
+                    if (url == null) {
+                        throw new RuntimeException("Expected key not defined: [" + urlKey + "].");
+                    }
+
+                    File f = new File(fileName);
+                    if (!f.exists()) {
+                        throw new RuntimeException("Unable to open file: [" + fileName + "].");
+                    }
+                    
+                    result.add(new FileShareInfo(fileName, url));
+                }
+            }
+        }
+
+        return result;
+    }
+    
+    private static class FileShareInfo {
+        
+        private final String fileName;
+        private final String url;
+
+        public FileShareInfo(String fileName, String url) {
+            this.fileName = fileName;
+            this.url = url;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+        
+    }
+            
+            
 
 }
