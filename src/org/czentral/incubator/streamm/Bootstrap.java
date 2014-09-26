@@ -141,7 +141,7 @@ public class Bootstrap {
                     continue;
                 }
 
-                if (prop.getValue().equals("true")) {
+                if (prop.getValue().equals("true") || prop.getValue().equals("1")) {
 
                     String fineNameKey = prefix + resourceID + ".file";
                     String fileName = props.getProperty(fineNameKey);

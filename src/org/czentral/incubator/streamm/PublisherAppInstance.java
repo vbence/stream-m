@@ -178,6 +178,16 @@ class PublisherAppInstance implements ApplicationInstance {
         String clientStreamID = streamName.substring(0, separatorPos);
         String clientSecret = streamName.substring(separatorPos + 1);
 
+        String streamProperty = props.getProperty("streams." + clientStreamID);
+        if (!"true".equals(streamProperty) && !"1".equals(streamProperty)) {
+            Map<String, Object> info = new HashMap<>();
+            info.put("code", "NetStream.Publish.BadName");  // with lack of better choice
+            info.put("level", "error");
+            info.put("description", "Stream does not exist.");
+            terminateWithError(mi, command, null, info);
+            return;
+        }
+        
         String streamSectret = props.getProperty("streams." + clientStreamID + ".password");
         if (streamSectret == null) {
             Map<String, Object> info = new HashMap<>();

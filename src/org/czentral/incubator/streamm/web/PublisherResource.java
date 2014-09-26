@@ -56,8 +56,9 @@ public class PublisherResource implements HTTPResource {
         }
         // stream ID
         String streamID = requestPath.substring(resLength + 1);
-        // is a stream with that name defined?
-        if (props.getProperty("streams." + streamID) == null) {
+        // is a stream with that name enabled?
+        String streamProperty = props.getProperty("streams." + streamID);
+        if (!"true".equals(streamProperty) && !"1".equals(streamProperty)) {
             throw new HTTPException(403, "Stream Not Registered");
         }
         // check password
