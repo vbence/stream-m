@@ -20,17 +20,11 @@
 package org.czentral.incubator.streamm;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.czentral.data.binary.AnnotationMapSerializationContext;
 import org.czentral.data.binary.BitBuffer;
-import org.czentral.data.binary.SerializerFactoryImpl;
-import org.czentral.data.binary.serializer.DescriptorInteger;
-import org.czentral.data.binary.serializer.FixedInteger;
-import org.czentral.data.binary.serializer.FixedString;
-import org.czentral.data.binary.serializer.GeneralSerializer;
-import org.czentral.minihttp.HTTPException;
+import org.czentral.data.binary.Serializer;
 import org.czentral.minirtmp.AMFPacket;
 import org.czentral.minirtmp.ApplicationContext;
 import org.czentral.minirtmp.MessageInfo;
@@ -45,28 +39,43 @@ class PublisherAppInstance implements ApplicationInstance {
     
     private static final String HANDLER_NAME_SET_DATA_FRAME = "@setDataFrame";
     
+    private static final int VIDEO_TIMESCALE_MULTIPLIER = 1000;
+    
+    private static final int MINIMAL_FRAGMENT_SIZE = 100 * 1024;
+    
+    
     protected ApplicationContext context;
 
     protected Properties props;
 
     protected Map<String, ControlledStream> streams;
     
+    protected Serializer serializer;
+
+    
     protected String streamID;
     
     protected double fcpublishTxID;
     
     protected Map<String, Object> metaData;
-    
-    protected Mp4Header header = new Mp4Header();
-    
-    protected Map<Integer, Integer> streamToTrack = new HashMap<>();
+
     
     protected boolean streamStarted = false;
 
+    protected Mp4Header header = new Mp4Header();
     
-    public PublisherAppInstance(Properties props, Map<String, ControlledStream> streams) {
+    protected Map<Integer, TrackInfo> streamToTrack = new HashMap<>();
+    
+    
+    protected Mp4FragmentBuilder builder;
+    
+    protected int fragmentSequence = 1;
+    
+    
+    public PublisherAppInstance(Properties props, Map<String, ControlledStream> streams, Serializer serializer) {
         this.props = props;
         this.streams = streams;
+        this.serializer = serializer;
     }
     
 
@@ -103,13 +112,18 @@ class PublisherAppInstance implements ApplicationInstance {
         }
     }
     
+    protected void terminateWithError(MessageInfo mi, RTMPCommand command, Object object, Object information) {
+        sendError(mi, command, object, information);
+        context.terminate();
+    }
+    
     protected void sendError(MessageInfo mi, RTMPCommand command, Object object, Object information) {
         AMFPacket response = new AMFPacket();
         response.writeString("_error");
         response.writeNumber(command.getTxid());
         response.writeMixed(null);
         response.writeMixed(null);
-        context.writeCommand(mi.streamID, response);
+        context.writeCommand(mi.chunkStreamID, response);
     }
     
     protected void sendSuccess(MessageInfo mi, RTMPCommand command) {
@@ -118,7 +132,7 @@ class PublisherAppInstance implements ApplicationInstance {
         response.writeNumber(command.getTxid());
         response.writeMixed(null);
         response.writeMixed(null);
-        context.writeCommand(mi.streamID, response);
+        context.writeCommand(mi.chunkStreamID, response);
     }
     
     protected void cmdCreateStream(MessageInfo mi, RTMPCommand command) {
@@ -127,7 +141,7 @@ class PublisherAppInstance implements ApplicationInstance {
         response.writeNumber(command.getTxid());
         response.writeMixed(null);
         response.writeMixed(1d);
-        context.writeCommand(mi.streamID, response);
+        context.writeCommand(mi.chunkStreamID, response);
     }
     
     protected void cmdConnect(MessageInfo mi, RTMPCommand command) {
@@ -151,7 +165,7 @@ class PublisherAppInstance implements ApplicationInstance {
         arg2.put("objectEncoding", 0d);
         response.writeObject(arg2);
 
-        context.writeCommand(mi.streamID, response);
+        context.writeCommand(mi.chunkStreamID, response);
     }
 
     protected void cmdFCPublish(MessageInfo mi, RTMPCommand command) {
@@ -170,17 +184,19 @@ class PublisherAppInstance implements ApplicationInstance {
             info.put("code", "NetStream.Publish.BadName");  // with lack of better choice
             info.put("level", "error");
             info.put("description", "Stream does not exist.");
-            sendError(mi, command, null, info);
-            throw new RuntimeException("Stream does not exist.");
+            terminateWithError(mi, command, null, info);
+            return;
         }
         if (!clientSecret.equals(streamSectret)) {
             Map<String, Object> info = new HashMap<>();
             info.put("code", "NetStream.Publish.BadName");  // with lack of better choice
             info.put("level", "error");
             info.put("description", "Authentication error.");
-            sendError(mi, command, null, info);
-            throw new RuntimeException("Authentication error.");
+            terminateWithError(mi, command, null, info);
+            return;
         }
+        
+        context.getLimit().assemblyBufferSize = 128 * 1024;
         
         streamID = clientStreamID;
         fcpublishTxID = command.getTxid();
@@ -203,7 +219,7 @@ class PublisherAppInstance implements ApplicationInstance {
         arg2.put("objectEncoding", 0d);
         response.writeObject(arg2);
 
-        context.writeCommand(mi.streamID, response);
+        context.writeCommand(mi.chunkStreamID, response);
     }
     
     @Override
@@ -219,42 +235,112 @@ class PublisherAppInstance implements ApplicationInstance {
 
     @Override
     public void mediaChunk(MessageInfo mi, byte[] readBuffer, int payloadOffset, int payloadLength) {
-        Integer trackID = streamToTrack.get(mi.streamID);
+
+        /*
+        Augment chunkStreamId with media information. Some clients
+        (ffmpeg / avconv) use the same stream for both audio and video tracks.
+        */
+        int fakeStreamId = mi.chunkStreamID | (mi.type == 0x09 ? 0x80000000 : 0);
         
-        if (trackID == null) {
+        TrackInfo trackInfo = streamToTrack.get(fakeStreamId);
+        
+        if (trackInfo == null) {
+            
+            //System.out.println("csid: " + mi.chunkStreamID);
+            
+            if (streamStarted) {
+                throw new RuntimeException("Unexpected media (frame in an unanounced stream).");
+            }
             
             if (mi.type == 0x09) {
                 final int SKIP_BYTES = 5;
                 byte[] decoderSpecificBytes = new byte[payloadLength - SKIP_BYTES];
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, decoderSpecificBytes, 0, payloadLength - SKIP_BYTES);
                 int timescale = metaData.get("framerate") != null
-                        ? ((Double)metaData.get("framerate")).intValue() / 1000
-                        : 30;
+                        ? ((Double)metaData.get("framerate")).intValue() * VIDEO_TIMESCALE_MULTIPLIER
+                        : 30 * VIDEO_TIMESCALE_MULTIPLIER;
                 int newTrackID = header.addVideoTrack(((Double)metaData.get("width")).intValue()
                         , ((Double)metaData.get("height")).intValue()
                         , timescale
                         , decoderSpecificBytes);
-                streamToTrack.put(mi.streamID, newTrackID);
+                
+                trackInfo = new TrackInfo(newTrackID, TrackInfo.Type.VIDEO, timescale);
+                streamToTrack.put(fakeStreamId, trackInfo);
                 
             } else if (mi.type == 0x08) {
                 final int SKIP_BYTES = 2;
                 byte[] decoderSpecificBytes = new byte[payloadLength - SKIP_BYTES];
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, decoderSpecificBytes, 0, payloadLength - SKIP_BYTES);
+                int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
                 int newTrackID = header.addAudioTrack(((Double)metaData.get("audiosamplerate")).intValue()
                         , ((Double)metaData.get("audiosamplesize")).intValue()
                         , ((Double)metaData.get("audiodatarate")).intValue()
                         , decoderSpecificBytes);
-                streamToTrack.put(mi.streamID, newTrackID);
+                
+                trackInfo = new TrackInfo(newTrackID, TrackInfo.Type.AUDIO, timescale);
+                streamToTrack.put(fakeStreamId, trackInfo);
             }
             
-        } else {
+            return;
+        }
+        
+        // need to flush old fragment
+        if (builder != null
+                && builder.getDataLength() >= MINIMAL_FRAGMENT_SIZE
+                && trackInfo.type == TrackInfo.Type.VIDEO
+                && (readBuffer[payloadOffset] & 0xf0) == 0x10) {
             
+            // start stream if not already started
             if (!streamStarted) {
                 startStream();
             }
+
+            // build and save frame
+            streams.get(streamID).pushFragment(builder.build(serializer));
             
+            // remove current builder
+            builder = null;
         }
+        
+        // create builder if none exists
+        if (builder == null) {
+            builder = new Mp4FragmentBuilder(fragmentSequence++, trackInfo.timeMs);
+            //System.out.println("---");
+        }
+
+        if (mi.type == 0x09) {
+            
+            /* if (builder.getDataLength() > 0)
+                return; */
+           
+            final int SKIP_BYTES = 5;
+            int offset = payloadOffset + 2;
+            int compositionTime = (readBuffer[offset++] & 0xff) << 16 | (readBuffer[offset++] & 0xff) << 8 | (readBuffer[offset++] & 0xff);
+            /* if (payloadLength < 5) {
+                System.out.println("payload < 5 bytes");
+            } else {
+                int nalSize = (readBuffer[offset++] & 0xff) << 24 | (readBuffer[offset++] & 0xff) << 16 | (readBuffer[offset++] & 0xff) << 8 | (readBuffer[offset++] & 0xff);
+                if (payloadLength - SKIP_BYTES < nalSize + 4) {
+                    System.out.println("NAL size mismatch! ns: " + nalSize + ", pls: " + (payloadLength - SKIP_BYTES));
+                }
+            } */
+            
+            builder.addFrame(trackInfo.trackID, (int)(compositionTime * trackInfo.timescale / 1000 / VIDEO_TIMESCALE_MULTIPLIER + 0.5) * VIDEO_TIMESCALE_MULTIPLIER, trackInfo.timeMs * trackInfo.timescale / 1000, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+            //System.out.println("vtime(" + trackInfo.trackID + "): " + trackInfo.timeMs);
+
+            trackInfo.timeMs += 1d / (trackInfo.timescale / VIDEO_TIMESCALE_MULTIPLIER) * 1000;
+        
+        } else if (mi.type == 0x08) {
+            
+            final int SKIP_BYTES = 2;
+            builder.addFrame(trackInfo.trackID, 0, trackInfo.timeMs * trackInfo.timescale / 1000, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+            //System.out.println("atime(" + trackInfo.trackID + "): " + trackInfo.timeMs);
+            
+            trackInfo.timeMs += 1d / trackInfo.timescale * 1024 * 1000;
+        }
+        
         //HexDump.displayHex(readBuffer, payloadOffset, Math.min(payloadLength, 32));
+        //System.out.println("at: " + mi.absoluteTimestamp + ", rt: " + mi.relativeTimestamp);
     }
     
     private void startStream() {
@@ -273,17 +359,10 @@ class PublisherAppInstance implements ApplicationInstance {
         
         final int BUFFER_LENGTH = 32 * 1024;
         BitBuffer bb = new BitBuffer(new byte[BUFFER_LENGTH], 0, BUFFER_LENGTH * 8);
-        SerializerFactoryImpl sf = new SerializerFactoryImpl();
-        sf.addSerializer(int.class, new FixedInteger());
-        sf.addSerializer(Integer.class, new FixedInteger());
-        sf.addSerializer(Number.class, new FixedInteger());
-        sf.addSerializer(String.class, new FixedString());
-        sf.addSerializer(DescriptorInteger.class, new DescriptorInteger());
-        GeneralSerializer s = new GeneralSerializer(sf);
-        AnnotationMapSerializationContext ctx = new AnnotationMapSerializationContext(bb, null, s);
+        AnnotationMapSerializationContext ctx = new AnnotationMapSerializationContext(bb, null, serializer);
         
-        s.serialize(header.getFileType(), ctx);
-        s.serialize(header.getMovie(), ctx);
+        serializer.serialize(header.getFileType(), ctx);
+        serializer.serialize(header.getMovie(), ctx);
         
         if ((bb.getBitPosition() & 0x07) != 0) {
             throw new RuntimeException("Rendered header is not byte-aligned.");
@@ -294,6 +373,37 @@ class PublisherAppInstance implements ApplicationInstance {
         
         stream.setHeader(headerBytes);
         
+    }
+    
+    private static class TrackInfo {
+        
+        public enum Type {
+            UNKNOWN,
+            AUDIO,
+            VIDEO
+        }
+
+        public int trackID = -1;
+        
+        public Type type = Type.UNKNOWN;
+        
+        public int timescale = -1;
+        
+        public long timeMs = 0;
+        
+        public TrackInfo() {
+        }
+        
+        public TrackInfo(int trackID, Type type) {
+            this.trackID = trackID;
+            this.type = type;
+        }
+
+        public TrackInfo(int trackID, Type type, int timescale) {
+            this(trackID, type);
+            this.timescale = timescale;
+        }
+
     }
     
 }

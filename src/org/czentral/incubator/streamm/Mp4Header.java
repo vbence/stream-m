@@ -29,6 +29,8 @@ import org.czentral.format.mp4.*;
  */
 public class Mp4Header {
     
+    private final int DEFAULT_TIMESCALE = 1000;
+    
     private FileTypeBox fileType;
 
     private MovieBox movie;
@@ -42,13 +44,14 @@ public class Mp4Header {
         
     public Mp4Header() {
         
-        String[] compatibleBrands = {"isom", "iso2", "avc1", "mp41"};
-        fileType = new FileTypeBox("isom", 512, compatibleBrands);
+        //fileType = new FileTypeBox("isom", 512, new String[] {"isom", "iso2", "avc1", "mp41", "dash"});
+        
+        fileType = new FileTypeBox("iso5", 1, new String[] {"avc1", "iso5", "dash"} );
 
         movie = new MovieBox();
 
         movieHeader = new MovieHeaderBox();
-        movieHeader.setTimescale(1000);
+        movieHeader.setTimescale(DEFAULT_TIMESCALE);
         movieHeader.setNextTrackId(-1);
         movie.getContent().add(movieHeader);
         
@@ -157,12 +160,14 @@ public class Mp4Header {
         TrackExtendsBox trex = new TrackExtendsBox();
         movieExtends.getContent().add(trex);
         trex.setTrackID(trackID);
-        
+        trex.setDefaultSampleDescriptionIndex(1);
+        trex.setDefaultSampleDuration(1024);
+        trex.getDefaultSampleFlags().setSampleDependsOn(SampleFlags.DEPENDS_ON_NO_OTHERS);
         
         return trackID;
     }
 
-    public int addVideoTrack(int width, int height, int timeScale, byte[] decoderSpecificBytes) {
+    public int addVideoTrack(int width, int height, int timescale, byte[] decoderSpecificBytes) {
         
         TrackBox track = new TrackBox();
         movie.getContent().add(track);
@@ -175,15 +180,15 @@ public class Mp4Header {
         trackHeader.setFlags(TrackHeaderBox.FLAG_TRACK_ENABLED | TrackHeaderBox.FLAG_TRACK_IN_MOVIE);
         trackHeader.setTrackID(trackID);
         trackHeader.setDuration(0xffffffff);
-        trackHeader.setWidth(width);
-        trackHeader.setHeight(height);
+        trackHeader.setWidth(width << 16);  // 16.16 fixed point format
+        trackHeader.setHeight(height << 16);    // 16.16 fixed point format
         
         MediaBox media = new MediaBox();
         track.getContent().add(media);
         
         MediaHeaderBox mediaHeader = new MediaHeaderBox();
         media.getContent().add(mediaHeader);
-        mediaHeader.setTimescale(timeScale);
+        mediaHeader.setTimescale(timescale);
         mediaHeader.setDuration(0xffffffff);
         
         HandlerBox handler = new HandlerBox();
@@ -239,6 +244,9 @@ public class Mp4Header {
         TrackExtendsBox trex = new TrackExtendsBox();
         movieExtends.getContent().add(trex);
         trex.setTrackID(trackID);
+        trex.setDefaultSampleDescriptionIndex(1);
+        trex.setDefaultSampleDuration(1001);
+        trex.getDefaultSampleFlags().setSampleIsDifferenceSample(1);
         
         
         return trackID;

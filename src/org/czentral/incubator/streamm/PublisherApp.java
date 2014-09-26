@@ -19,8 +19,18 @@
 
 package org.czentral.incubator.streamm;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Properties;
+import org.czentral.data.binary.ByteArraySlice;
+import org.czentral.data.binary.Serializer;
+import org.czentral.data.binary.SerializerFactoryImpl;
+import org.czentral.data.binary.serializer.ByteArraySliceSerializer;
+import org.czentral.data.binary.serializer.ByteBufferSerializer;
+import org.czentral.data.binary.serializer.DescriptorInteger;
+import org.czentral.data.binary.serializer.FixedInteger;
+import org.czentral.data.binary.serializer.FixedString;
+import org.czentral.data.binary.serializer.GeneralSerializer;
 import org.czentral.minirtmp.Application;
 import org.czentral.minirtmp.ApplicationInstance;
 
@@ -32,16 +42,29 @@ public class PublisherApp implements Application {
     
     protected Properties props;
 
-    protected Map<String, ControlledStream> streams;    
+    protected Map<String, ControlledStream> streams;
+    
+    protected Serializer serializer; 
 
+    
     public PublisherApp(Properties props, Map<String, ControlledStream> streams) {
         this.props = props;
         this.streams = streams;
+        
+        SerializerFactoryImpl sf = new SerializerFactoryImpl();
+        sf.addSerializer(int.class, new FixedInteger());
+        sf.addSerializer(Integer.class, new FixedInteger());
+        sf.addSerializer(Number.class, new FixedInteger());
+        sf.addSerializer(String.class, new FixedString());
+        sf.addSerializer(DescriptorInteger.class, new DescriptorInteger());
+        sf.addSerializer(ByteBuffer.class, new ByteBufferSerializer());
+        sf.addSerializer(ByteArraySlice.class, new ByteArraySliceSerializer());
+        serializer = new GeneralSerializer(sf);
     }
 
     @Override
     public ApplicationInstance getInstance() {
-        return new PublisherAppInstance(props, streams);
+        return new PublisherAppInstance(props, streams, serializer);
     }
     
 }
