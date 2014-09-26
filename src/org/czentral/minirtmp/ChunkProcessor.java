@@ -12,6 +12,8 @@ package org.czentral.minirtmp;
  */
 public interface ChunkProcessor {
     
+    public boolean alive();
+    
     public void processChunk(MessageInfo mi, byte[] buffer, int payloadOffset, int payloadLength);
     
 }

@@ -31,6 +31,8 @@ import java.util.Map;
  */
 public class ApplicationContext implements ChunkProcessor {
     
+    protected boolean alive = true;
+    
     protected Map<Integer, AssemblyBuffer> assemblyBuffers = new HashMap<>();
     
     protected OutputStream outputStream;
@@ -48,7 +50,7 @@ public class ApplicationContext implements ChunkProcessor {
         this.limit = limit;
         this.library = factory;
     }
-    
+
 
     /**
      * Get the value of outputStream
@@ -234,6 +236,16 @@ public class ApplicationContext implements ChunkProcessor {
         public AssemblyBuffer(int size) {
             array = new byte[size];
         }
+    }
+    
+    
+    @Override
+    public boolean alive() {
+        return alive;
+    }
+    
+    public void terminate() {
+        alive = false;
     }
     
 }

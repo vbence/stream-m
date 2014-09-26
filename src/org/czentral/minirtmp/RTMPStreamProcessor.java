@@ -26,6 +26,8 @@ import org.czentral.util.stream.Processor;
 
 class RTMPStreamProcessor implements Processor {
     
+    protected boolean finished = false;
+    
     protected Map<Integer, MessageInfo> lastMessages = new HashMap<Integer, MessageInfo>();
     
     protected int chunkSize = 128;
@@ -63,7 +65,7 @@ class RTMPStreamProcessor implements Processor {
 
     @Override
     public boolean finished() {
-        return false;
+        return finished;
     }
 
     @Override
@@ -73,7 +75,7 @@ class RTMPStreamProcessor implements Processor {
             int packetBytes = processPacket(buffer, offset + bytesProcessed, length - bytesProcessed);
             bytesProcessed += packetBytes;
             
-            if (packetBytes == 0) {
+            if (packetBytes == 0 || finished) {
                 return bytesProcessed;
             }
         } while (true);
@@ -198,6 +200,8 @@ class RTMPStreamProcessor implements Processor {
         }
         
         chunkProcessor.processChunk(lastMessage, buffer, readOffset, payloadLength);
+        
+        finished = !chunkProcessor.alive();
         
         lastMessage.offset += payloadLength;
         
