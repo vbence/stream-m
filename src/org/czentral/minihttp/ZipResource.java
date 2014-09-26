@@ -21,11 +21,11 @@ package org.czentral.minihttp;
 import java.util.zip.*;
 import java.io.*;
 
-public class HTTPZipResource implements HTTPResource {
+public class ZipResource implements HTTPResource {
     
     protected ZipFile zip;
     
-    public HTTPZipResource(String fileName) throws ZipException, IOException {
+    public ZipResource(String fileName) throws ZipException, IOException {
         zip = new ZipFile(fileName);
     }
     

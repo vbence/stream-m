@@ -24,7 +24,7 @@ import org.czentral.incubator.streamm.web.ConsumerResource;
 import org.czentral.incubator.streamm.web.InfoResource;
 import java.io.*;
 import java.util.*;
-import org.czentral.incubator.streamm.web.FileResource;
+import org.czentral.minihttp.FileResource;
 import org.czentral.minihttp.*;
 import org.czentral.minirtmp.ApplicationLibrary;
 import org.czentral.minirtmp.ApplicationLibraryImpl;
@@ -102,7 +102,7 @@ public class Bootstrap {
             // mapped zip files
             for (FileShareInfo shareInfo : getSharedResources(PREFIX_ZIP, props)) {
                 try {
-                    HTTPZipResource resource = new HTTPZipResource(shareInfo.fileName);
+                    ZipResource resource = new ZipResource(shareInfo.fileName);
                     server.registerResource(shareInfo.url, resource);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
