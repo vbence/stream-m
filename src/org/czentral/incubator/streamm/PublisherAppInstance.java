@@ -175,7 +175,12 @@ class PublisherAppInstance implements ApplicationInstance {
         String streamName = (String)command.getArguments().get(0);
         int separatorPos = streamName.indexOf(STREAM_NAME_SEPARATOR);
         if (separatorPos == -1) {
-            throw new RuntimeException("No separator found in stream name.");
+            Map<String, Object> info = new HashMap<>();
+            info.put("code", "NetStream.Publish.BadName");  // with lack of better choice
+            info.put("level", "error");
+            info.put("description", "Stream password required.");
+            terminateWithError(mi, command, null, info);
+            return;
         }
         String clientStreamID = streamName.substring(0, separatorPos);
         String clientSecret = streamName.substring(separatorPos + 1);
@@ -208,7 +213,8 @@ class PublisherAppInstance implements ApplicationInstance {
             return;
         }
         
-        context.getLimit().assemblyBufferSize = 128 * 1024;
+        // raise limit after successful authentication
+        context.getLimit().assemblyBufferSize = 256 * 1024;
         
         streamID = clientStreamID;
         fcpublishTxID = command.getTxid();
