@@ -70,4 +70,34 @@
     nbproject/build-impl.xml file. 
 
     -->
+
+        <target name="-post-jar">
+            
+            <!-- Create ZIP file for the web client -->
+            <zip destfile="${dist.dir}/console.zip" basedir="webclient"/>
+
+            <!-- Create ZIP file for the demo player -->
+            <zip destfile="${dist.dir}/player-demo.zip" basedir="player-demo"/>
+
+            <!-- Copy sample configuration file -->
+            <copy file="server.properties.sample" todir="${dist.dir}"/>
+
+            <!-- Copy GPL license file -->
+            <copy file="GPL.txt" todir="${dist.dir}"/>
+
+            <!-- Copy README file -->
+            <copy file="README.md" todir="${dist.dir}"/>
+            
+            <!-- Copy README file also as .txt (and overwrite Netbeans's default) -->
+            <copy file="README.md" tofile="${dist.dir}/README.txt"/>
+            
+        </target>
+        
+        <target name="package" depends="jar">
+            <tstamp>
+                <format property="current-time" pattern="yyyyMMdd-hhmm"/>
+            </tstamp>
+            
+            <zip destfile="${dist.dir}/stream-m-${current-time}.zip" basedir="${dist.dir}"/>
+        </target>
 </project>

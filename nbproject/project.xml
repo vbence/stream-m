@@ -5,6 +5,7 @@
         <data xmlns="http://www.netbeans.org/ns/j2se-project/3">
             <name>Stream-m</name>
             <source-roots>
+                <root id="src.player-demo.dir"/>
                 <root id="src.webclient.dir"/>
                 <root id="src.dir"/>
             </source-roots>
