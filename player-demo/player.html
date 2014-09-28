@@ -1,0 +1,17 @@
+<html>
+    <body>
+        <h2>Stream-m JavaScript Player Demo</h2>
+        <p>This page will play the stream called 'first' using the MediaSource API.</p>
+        <div id="playerContainer"></div>
+        
+        <script src="player.js"></script>
+        <script>
+            var playerContainer = document.getElementById("playerContainer");
+            var options = {
+                url: "/consume/first",
+                contentType: "video/mp4;codecs=\"avc1.4d401f,mp4a.40.2\"",
+            };
+            var player = new org.czentral.streamm.Player(playerContainer, options);
+        </script>
+    </body>
+</html>
