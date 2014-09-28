@@ -88,7 +88,7 @@ class PublisherAppInstance implements ApplicationInstance {
 
     @Override
     public void invokeCommand(MessageInfo mi, RTMPCommand command) {
-        System.err.println("cmd: " + command.getName() + " " + command.getArguments());
+        // System.err.println("cmd: " + command.getName() + " " + command.getArguments());
         
         if (command.getName().equals("connect")) {
             cmdConnect(mi, command);
@@ -97,7 +97,8 @@ class PublisherAppInstance implements ApplicationInstance {
             sendSuccess(mi, command);
         
         } else if (command.getName().equals("FCUnpublish")) {
-            sendSuccess(mi, command);
+            //sendSuccess(mi, command);
+            context.terminate();
             
         } else if (command.getName().equals("createStream")) {
             cmdCreateStream(mi, command);
@@ -107,6 +108,9 @@ class PublisherAppInstance implements ApplicationInstance {
         
         } else if (command.getName().equals("publish")) {
             cmdPublish(mi, command);
+        
+        } else if (command.getName().equals("deleteStream")) {
+            cmdDeleteStream(mi, command);
         
         } else {
             System.err.println("Unknown command: " + command.getName());
@@ -135,6 +139,16 @@ class PublisherAppInstance implements ApplicationInstance {
         response.writeMixed(null);
         response.writeMixed(null);
         context.writeCommand(mi.chunkStreamID, response);
+    }
+    
+    protected void cmdDeleteStream(MessageInfo mi, RTMPCommand command) {
+        AMFPacket response = new AMFPacket();
+        response.writeString("_result");
+        response.writeNumber(command.getTxid());
+        response.writeMixed(null);
+        response.writeMixed(null);
+        context.writeCommand(mi.chunkStreamID, response);
+        context.terminate();
     }
     
     protected void cmdCreateStream(MessageInfo mi, RTMPCommand command) {

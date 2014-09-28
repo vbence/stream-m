@@ -32,15 +32,15 @@ streams.first.limit = 100
 
 # static.<resourcename>
 # if the value is "true" or "1" then the resource will be created
-static.demo = true
+#static.index = true
 
 # static.<resourcename>.file
 # determines the path and name of the static file to share
-static.demo.file = src/demo.html
+#static.index.file = index.html
 
 # static.<resourcename>.file
 # determines the virtual (web) path on which this resource will be served
-static.demo.url = /demo.html
+#static.index.url = /index.html
 
 
 #
@@ -60,3 +60,9 @@ zip.console.file = console.zip
 # ZIP archive will be exposed
 zip.console.url = /console
 
+
+# Player Demo
+# Access it on the URL: /player-demo/player.html
+zip.player-demo = true
+zip.player-demo.file = player-demo.zip
+zip.player-demo.url = /player-demo

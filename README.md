@@ -20,12 +20,70 @@ Putting the stream URL in a `<video>` tag should work in all WebM-capable platfo
 
 ### <a name="format-h264"></a> H.264 
 
-**H.264 with AAC** is the second addition. The current video publishing solutions (like the [Open Broadcasting Software](https://obsproject.com/)) were created to be compatible with Adobe's *Flash Media Server*. To take advantage of these tools it was necessary for Stream-m to *"speak flash"*, therefore a minimal **RTMP** server implementation was written to handle incoming streams.
+**H.264 with AAC** is the second addition. Current video publishing solutions (like the [Open Broadcasting Software](https://obsproject.com/)) were created to be compatible with Adobe's *Flash Media Server*. To take advantage of these tools it was necessary for Stream-m to *"speak flash"*, therefore a minimal **RTMP** server implementation was written to handle incoming streams.
 
 Current RTMP support is limited to receiving streams from the publishing software (like *OBS*). Consuming (playing) streams through RTMP is not supported at the moment.
 
 Playing H.264 live streams has been tested and working in Google Chrome so far (Android version included). Directly putting the stream's URL into a `<video>` tag won't work with this format. It will on the other hand, by using the [MediaSource API](http://www.w3.org/TR/media-source/) (currently used by YouTube's HTML5 video player). 
 
+A demo player is included, which will play the stream with the name `first` (the default name in the sample configuration file). The demo can be accessed (by default) on the following URL:
+
+    http://localhost:8080/player-demo/player.html
+
+
+## RUNNING THE SERVER
+
+    java -jar stream-m.jar <configfile>
+
+Before running the server you should edit the sample config file (change password and choose a stream name). So you will end up with something like:
+
+    java -jar stream-m.jar server.properties
+
+
+## HTTP INTERFACE
+
+Streams are identified by a unique name. The program refers to this as StreamID or stream name. Note that the `<` and `>` characters are used just to indicate substitution, they must not be included in the resulting URL.
+
+> **Note:** Many parts of this section are only relevant for streams using the WebM format. For peculiarities of H.264 streams please see the [specific section](#format-h264) above.
+
+The default port for the built-in HTTP server is **8080**.
+
+The name and password of each stream is defined in the config file. A stream must be sent with POST or PUT method to the following URL to start a broadcast:
+
+    /publish/<streamname>?password=<streampass>
+
+A stream can be accessed (watched) on the following URL. You may want to insert this URL into a HTML5 `<video>` tag:
+
+    /consume/<streamname>
+
+To support playback with the *MediaSource API* (requesting fragments through *XMLHttpRequest*) additional URL parameters can influence playback. Currently supported GET parameters:
+
+name             | default | effect
+-----------------|---------|--------------------------
+sendHeader       |  true   | Sets whether to send header.
+singleFragment   |  false  | If enabled only a single fragment is sent.
+fragmentSequence |  *n/a*  | Output will only start when a fragment with the given sequence number is available.
+
+
+A snapshot (the first key frame of the last completed fragment) can be downloaded in WebP format on the URL:
+
+    /snapshot/<streamname>
+
+
+Real-time information can be acquired through an AJAX based console (giving the name and password for the chosen stream on the UI):
+
+    /console/client.html
+
+
+## RTMP INTERFACE
+
+Currently the server only contains one RTMP application. Listening on the name `publish` it will take a stream, assemble frames then pass them to the usual HTTP infrastructure.
+
+The default port for the built-in RTMP server is **8081**.
+
+The endpoint of the publishing software needs to have the following format:
+
+    /publish/<streamname>?<streampass>
 
 
 ## FRAGMENTS
@@ -43,63 +101,6 @@ The ideal fragment size is around 200 kBytes (or 1600 kbits). The key frame inte
 The server splits fragments when it seems necessary. A soft minimum for frame size is currently 100k (no new fragment is started if a new key frame arrives within 100 kBytes from a previous key frame).
 
 The hard maximum for a fragments is 2048 kBytes. This is twice the size needed to hold 2 seconds of a 4096 kbit/sec HD stream.
-
-
-## RUNNING THE SERVER
-
-    java StreamingServer <configfile>
-
-The release version has the classes in a .jar archive. Before running the server you should edit the sample config file (change password and choose a stream name). So you will end up with something like:
-
-    java -cp lib/stream-m.jar StreamingServer server.properties
-
-
-## HTTP INTERFACE
-
-Streams are identified by a name. The program refers to this as StreamID or stream name. Note that the `<` and `>` characters are used just to indicate substitution, they must not be included in the resulting URL.
-
-> **Note:** Many parts of this section are only relevant for streams using the WebM format. For peculiarities of H.264 streams please see the [specific section](#format-h264) above.
-
-The default port for the built-in HTTP server is **8080**.
-
-The name and password of each stream is defined in the config file. A stream must be sent with POST or PUT method to the following URL to start a broadcast:
-
-`/publish/<streamname>?password=<streampass>`
-
-
-A stream can be accessed (watched) on the following URL. You may want to insert this URL into a HTML5 `<video>` tag:
-
-`/consume/<streamname>`
-
-To support playback with the *MediaSource API* (requesting fragments through *XMLHttpRequest*) additional URL parameters can influence playback. Currently supported:
-
-name             | default | effect
------------------|---------|--------------------------
-sendHeader       |  true  | Sets whether to send header.
-singleFragment   |  false | If enabled only a single fragment is sent.
-fragmentSequence |  n/a   | Output will only start when a fragment with the given sequence number is available.
-
-
-
-A snapshot (the first key frame of the last completed fragment) can be downloaded in WebP format on the URL:
-
-`/snapshot/<streamname>`
-
-
-Real-time information can be acquired through an AJAX based console (giving the name and password for the chosen stream on the UI):
-
-`/console/client.html`
-
-
-## RTMP INTERFACE
-
-Currently the server only contains one RTMP application. Listening on the name `publish` it will take a stream, assemble frames then pass them to the usual HTTP infrastructure.
-
-The default port for the built-in RTMP server is **8081**.
-
-The endpoint of the publishing software needs to have the following format:
-
-`/publish/<streamname>?<streampass>`
 
 
 ## PUBLISHING WEBM
@@ -134,11 +135,28 @@ So we are going to usee them both together: VLC will access the audio, compress 
 
 ### On Linux Systems
 
-*FFMpeg* can be used with the following command line (see assumptions above):
+*FFmpeg* can be used with the following command line (see assumptions above):
 
-    ffmpeg -f video4linux2 -s 320x240 -r 16 -i /dev/video0 -f oss -i /dev/dsp -g 52 \
-    -acodec libvorbis -ab 64k -vcodec libvpx -vb 448k \
+    ffmpeg -f video4linux2 -s 320x240 -r 16 -i /dev/video0 -f oss -i /dev/dsp \
+    -g 52 -acodec libvorbis -ab 64k -vcodec libvpx -vb 448k \
     -f webm http://example.com:8080/publish/first?password=secret`
+
+
+## PUBLISHING H.264
+
+### On Windows Systems
+
+For the peculiarities of FFmpeg on Windows please see the section above (about WebM). I recommend using OBS or similar product over FFmpeg.
+
+### On Linux Systems
+
+The following command will stream media from your the system's webcam and microphone. Note that the *High* profile and *level 4.0* is used. Also tested and working is *Medium* profile with *level 3.1*.
+
+    ffmpeg -f video4linux2 -s 320x240 -r 16 -i /dev/video0 -f oss -i /dev/dsp \
+    -g 52 -strict experimental -acodec aac -ab 56k -vcodec libx264 -vb 452k \
+    -profile:v high -level 40 -r 16 \
+    -f flv "rtmp://example.com:8081/publish/first?secret"
+
 
 ## TESTING THE INSTALLATION
 
@@ -149,4 +167,4 @@ You can test the installation with the downloadable sample video, *univac.webm*.
 
 You can watch it by positioning your (WebM-capable) browser to the following address:
 
-`http://localhost:8080/consume/first`
+    http://localhost:8080/consume/first
