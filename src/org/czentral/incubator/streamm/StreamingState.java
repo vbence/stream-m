@@ -28,8 +28,6 @@ class StreamingState implements Processor {
     private static final long ID_BLOCKGROUP = 0xA0;
     private static final long ID_TIMECODE = 0xE7;
     
-    private static final long MINIMAL_FRAGMENT_LENGTH = 100 * 1024;
-    
     private long clusterTimeCode = 0;
     
     private StreamInput input;
@@ -109,7 +107,7 @@ class StreamingState implements Processor {
                         // keyframe
                         
                         //DEBUG System.out.print("key ");
-                        if (fragment.length() >= MINIMAL_FRAGMENT_LENGTH) {
+                        if (fragment.length() >= MovieFragment.LIMIT_FRAME_MINIMUM) {
                             
                             // closing current cluster (of the curent fragment)
                             fragment.closeCluster();

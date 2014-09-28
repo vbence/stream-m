@@ -185,7 +185,7 @@ public class Mp4FragmentBuilder {
     
     public MovieFragment build(Serializer s) {
         
-        final int BUFFER_LENGTH = 2048 * 1024;
+        final int BUFFER_LENGTH = MovieFragment.LIMIT_FRAME_MAXIMUM;
         BitBuffer bb = new BitBuffer(new byte[BUFFER_LENGTH], 0, BUFFER_LENGTH * 8);
         AnnotationMapSerializationContext ctx = new AnnotationMapSerializationContext(bb, null, s);
         

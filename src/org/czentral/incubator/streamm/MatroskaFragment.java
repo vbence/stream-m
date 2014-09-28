@@ -29,7 +29,7 @@ public class MatroskaFragment implements MovieFragment {
     private final byte[] clusterHead = {0x1F, 0x43, (byte)0xB6, 0x75, 0x08, 00, 00, 00, 00, 
             (byte)0xe7, (byte)0x88, 00, 00, 00, 00, 00, 00, 00, 00};
 
-    private byte[] data = new byte[1024 * 1024];
+    private byte[] data = new byte[LIMIT_FRAME_MAXIMUM];
     private int dataLength = 0;
     private int clusterOffset = -1;
     
