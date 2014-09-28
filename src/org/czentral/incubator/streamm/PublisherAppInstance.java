@@ -123,8 +123,8 @@ class PublisherAppInstance implements ApplicationInstance {
         AMFPacket response = new AMFPacket();
         response.writeString("_error");
         response.writeNumber(command.getTxid());
-        response.writeMixed(null);
-        response.writeMixed(null);
+        response.writeMixed(object);
+        response.writeMixed(information);
         context.writeCommand(mi.chunkStreamID, response);
     }
     
