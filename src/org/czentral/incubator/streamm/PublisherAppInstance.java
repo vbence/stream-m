@@ -43,6 +43,8 @@ class PublisherAppInstance implements ApplicationInstance {
     
     private static final int MINIMAL_FRAGMENT_SIZE = 100 * 1024;
     
+    private static final char STREAM_NAME_SEPARATOR = '?';
+    
     
     protected ApplicationContext context;
 
@@ -171,7 +173,7 @@ class PublisherAppInstance implements ApplicationInstance {
     protected void cmdFCPublish(MessageInfo mi, RTMPCommand command) {
         
         String streamName = (String)command.getArguments().get(0);
-        int separatorPos = streamName.indexOf(';');
+        int separatorPos = streamName.indexOf(STREAM_NAME_SEPARATOR);
         if (separatorPos == -1) {
             throw new RuntimeException("No separator found in stream name.");
         }
