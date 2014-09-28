@@ -51,7 +51,7 @@ public class Bootstrap {
         
         // chacking args
         if (args.length < 1) {
-            System.err.println("Usage: java StreamingServer <configfile>");
+            System.err.println("Usage: Bootstrap <configfile>");
             System.exit(1);
         }
         
