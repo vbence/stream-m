@@ -1,76 +1,103 @@
-<project name="stream-m" default="dist" basedir=".">
-	<description>
-		stream.m is a video broadcasting tool compatible with Google's WebM format.
-	</description>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- You may freely edit this file. See commented blocks below for -->
+<!-- some examples of how to customize the build. -->
+<!-- (If you delete it and reopen the project it will be recreated.) -->
+<!-- By default, only the Clean and Build commands use this build script. -->
+<!-- Commands such as Run, Debug, and Test only use this build script if -->
+<!-- the Compile on Save feature is turned off for the project. -->
+<!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
+<!-- in the project's Project Properties dialog box.-->
+<project name="Stream-m" default="default" basedir=".">
+    <description>Builds, tests, and runs the project Stream-m.</description>
+    <import file="nbproject/build-impl.xml"/>
+    <!--
 
-	<!-- set global properties for this build -->
-	<property name="src" location="src"/>
-	<property name="classes" location="classes"/>
-	<property name="dist" location="dist"/>
-	<property name="webclient" location="webclient"/>
-	<property name="debug" value="true"/>
+    There exist several targets which are by default empty and which can be 
+    used for execution of your tasks. These targets are usually executed 
+    before and after some main targets. They are: 
 
-	<target name="init">
-		<!-- Create the time stamp -->
-		<tstamp/>
-		<!-- Create the build directory structure used by compile -->
-		<mkdir dir="${dist}"/>
-		<mkdir dir="${classes}"/>
-	</target>
+      -pre-init:                 called before initialization of project properties
+      -post-init:                called after initialization of project properties
+      -pre-compile:              called before javac compilation
+      -post-compile:             called after javac compilation
+      -pre-compile-single:       called before javac compilation of single file
+      -post-compile-single:      called after javac compilation of single file
+      -pre-compile-test:         called before javac compilation of JUnit tests
+      -post-compile-test:        called after javac compilation of JUnit tests
+      -pre-compile-test-single:  called before javac compilation of single JUnit test
+      -post-compile-test-single: called after javac compilation of single JUunit test
+      -pre-jar:                  called before JAR building
+      -post-jar:                 called after JAR building
+      -post-clean:               called after cleaning build products
 
-	<target name="compile" depends="init" description="compile the source">
-		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${src}" destdir="${classes}" debug="${debug}" includeantruntime="false"/>
-	</target>
+    (Targets beginning with '-' are not intended to be called on their own.)
 
-	<target name="dist" depends="compile" description="generate the distribution">
-		<!-- Create the distribution directory -->
-		<mkdir dir="${dist}/lib"/>
-		
-		<!-- Create JAR file from all the classes -->
-		<jar jarfile="${dist}/lib/stream-m.jar" basedir="${classes}"/>
-		
-		<!-- Create ZIP file for the web client -->
-		<zip destfile="${dist}/console.zip" basedir="${webclient}"/>
-		
-		<!-- Copy sample configuration file -->
-		<copy file="server.conf.sample" todir="${dist}"/>
-		
-		<!-- Copy GPL license file -->
-		<copy file="GPL.txt" todir="${dist}"/>
-		
-		<!-- Copy README file -->
-		<copy file="README.txt" todir="${dist}"/>
-		
-	</target>
-	
-	<target name="package" depends="dist" description="generate download package">
-		
-		<!-- Delete earlier distribution packages if any -->
-		<delete>
-			<fileset dir="${dist}" includes="stream-m-*.zip"/>
-		</delete>
-		
-		<!-- Get SVN revision -->
-		<exec executable="svn" output="${dist}/svn.properties">
-			<arg value="info" />
-		</exec>
-		<property prefix="svn" file="${dist}/svn.properties"/>
-		
-		<!-- SVN info temp file -->
-		<delete file="${dist}/svn.properties"/>
+    Example of inserting an obfuscator after compilation could look like this:
 
-		<!-- Report SVN revision number -->
-		<echo>SVN Revision: ${svn.Revision}</echo>
+        <target name="-post-compile">
+            <obfuscate>
+                <fileset dir="${build.classes.dir}"/>
+            </obfuscate>
+        </target>
 
-		<!-- Compress everything to a release ZIP file -->
-		<zip destfile="${dist}/stream-m-r${svn.Revision}-${DSTAMP}.zip" basedir="${dist}"/>
-		
-	</target>
+    For list of available properties check the imported 
+    nbproject/build-impl.xml file. 
 
-	<target name="clean" description="clean up">
-		<!-- Delete the ${classes} and ${dist} directory trees -->
-		<delete dir="${classes}"/>
-		<delete dir="${dist}"/>
-	</target>
+
+    Another way to customize the build is by overriding existing main targets.
+    The targets of interest are: 
+
+      -init-macrodef-javac:     defines macro for javac compilation
+      -init-macrodef-junit:     defines macro for junit execution
+      -init-macrodef-debug:     defines macro for class debugging
+      -init-macrodef-java:      defines macro for class execution
+      -do-jar:                  JAR building
+      run:                      execution of project 
+      -javadoc-build:           Javadoc generation
+      test-report:              JUnit report generation
+
+    An example of overriding the target for project execution could look like this:
+
+        <target name="run" depends="Stream-m-impl.jar">
+            <exec dir="bin" executable="launcher.exe">
+                <arg file="${dist.jar}"/>
+            </exec>
+        </target>
+
+    Notice that the overridden target depends on the jar target and not only on 
+    the compile target as the regular run target does. Again, for a list of available 
+    properties which you can use, check the target you are overriding in the
+    nbproject/build-impl.xml file. 
+
+    -->
+
+        <target name="-post-jar">
+            
+            <!-- Create ZIP file for the web client -->
+            <zip destfile="${dist.dir}/console.zip" basedir="webclient"/>
+
+            <!-- Create ZIP file for the demo player -->
+            <zip destfile="${dist.dir}/player-demo.zip" basedir="player-demo"/>
+
+            <!-- Copy sample configuration file -->
+            <copy file="server.properties.sample" todir="${dist.dir}"/>
+
+            <!-- Copy GPL license file -->
+            <copy file="GPL.txt" todir="${dist.dir}"/>
+
+            <!-- Copy README file -->
+            <copy file="README.md" todir="${dist.dir}"/>
+            
+            <!-- Copy README file also as .txt (and overwrite Netbeans's default) -->
+            <copy file="README.md" tofile="${dist.dir}/README.txt"/>
+            
+        </target>
+        
+        <target name="package" depends="jar">
+            <tstamp>
+                <format property="current-time" pattern="yyyyMMdd-hhmm"/>
+            </tstamp>
+            
+            <zip destfile="${dist.dir}/stream-m-${current-time}.zip" basedir="${dist.dir}"/>
+        </target>
 </project>
