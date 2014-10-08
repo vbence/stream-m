@@ -25,6 +25,7 @@ import java.util.Properties;
 import org.czentral.data.binary.AnnotationMapSerializationContext;
 import org.czentral.data.binary.BitBuffer;
 import org.czentral.data.binary.Serializer;
+import org.czentral.format.mp4.DecoderConfigDescriptor;
 import org.czentral.minirtmp.AMFPacket;
 import org.czentral.minirtmp.ApplicationContext;
 import org.czentral.minirtmp.MessageInfo;
@@ -61,6 +62,8 @@ class PublisherAppInstance implements ApplicationInstance {
     
     protected Map<String, Object> metaData;
 
+
+    protected String codecDescription = "";
     
     protected boolean streamStarted = false;
 
@@ -288,6 +291,13 @@ class PublisherAppInstance implements ApplicationInstance {
                 final int SKIP_BYTES = 5;
                 byte[] decoderSpecificBytes = new byte[payloadLength - SKIP_BYTES];
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, decoderSpecificBytes, 0, payloadLength - SKIP_BYTES);
+                
+                int codecConfig = (decoderSpecificBytes[1] & 0xff) << 16
+                        | (decoderSpecificBytes[2] & 0xff) << 8
+                        | (decoderSpecificBytes[3] & 0xff);
+                codecDescription += (codecDescription.length() > 0 ? "," : "")
+                        + "avc1." + Integer.toHexString(0x1000000 | codecConfig).substring(1);
+                
                 int timescale = metaData.get("framerate") != null
                         ? ((Double)metaData.get("framerate")).intValue() * VIDEO_TIMESCALE_MULTIPLIER
                         : 30 * VIDEO_TIMESCALE_MULTIPLIER;
@@ -303,6 +313,18 @@ class PublisherAppInstance implements ApplicationInstance {
                 final int SKIP_BYTES = 2;
                 byte[] decoderSpecificBytes = new byte[payloadLength - SKIP_BYTES];
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, decoderSpecificBytes, 0, payloadLength - SKIP_BYTES);
+                
+                // AOT is in decimal
+                int audioObjectType = (decoderSpecificBytes[0] & 0xff) >> 3;
+                if (audioObjectType == 31) {
+                    audioObjectType = ( (decoderSpecificBytes[0] & 0x07) << 3
+                            | (decoderSpecificBytes[1] & 0xe0) >> 5 )
+                            + 31;
+                }
+                codecDescription += (codecDescription.length() > 0 ? "," : "")
+                        + "mp4a." + Integer.toHexString(0x100 | DecoderConfigDescriptor.PROFILE_AAC_MAIN).substring(1)
+                        + "." + audioObjectType;
+
                 int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
                 int newTrackID = header.addAudioTrack(((Double)metaData.get("audiosamplerate")).intValue()
                         , ((Double)metaData.get("audiosamplesize")).intValue()
@@ -384,7 +406,7 @@ class PublisherAppInstance implements ApplicationInstance {
         }
         
         stream = new ControlledStream(Integer.parseInt(props.getProperty("streams." + streamID + ".limit")));
-        stream.setMimeType("video/mp4");
+        stream.setMimeType("video/mp4;codecs=\"" + codecDescription + "\"");
         streams.put(streamID, stream);
         
         // rendering mp4 header
