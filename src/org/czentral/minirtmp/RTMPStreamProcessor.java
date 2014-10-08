@@ -111,6 +111,10 @@ class RTMPStreamProcessor implements Processor {
             headLength = 0;
         }
         
+        if (length < sidLength + headLength) {
+            return 0;
+        }
+        
         int payloadLength = 0;
         int type;
         MessageInfo lastMessage = lastMessages.get(sid);
