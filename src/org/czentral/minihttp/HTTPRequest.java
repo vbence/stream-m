@@ -46,14 +46,13 @@ public interface HTTPRequest {
     public String getPathName();
     
     /**
-     * Gets query string: the part ofthe URI after the '?' sign.
+     * Gets query string: the part of the URI after the '?' sign.
      * @return The query string.
      */
     public String getQueryString();
     
     /**
-     * Gets treuest version. (e.g. <code>HTTP/1.1</code>)
-     * @param key Header key.
+     * Gets the request version. (e.g. <code>HTTP/1.1</code>)
      * @return Array containing the values for all header lines with this key.
      */
     public String getVersion();
@@ -66,7 +65,7 @@ public interface HTTPRequest {
     public String[] getHeaders(String key);
     
     /**
-     * Returns the lastest header field with this identifier.
+     * Returns the last header field with this identifier.
      * @param key Header key.
      * @return The latest request header line with the given key.
      */
