@@ -36,7 +36,7 @@ import org.czentral.minihttp.HTTPResponse;
  */
 public class PublisherResource implements HTTPResource {
     
-    private final String MIME_TYPE_WEBM = "video/webm";
+    private final String MIME_TYPE_WEBM = "video/webm; codecs=\"vp8,vorbis\"";
     
     protected Properties props;
 
