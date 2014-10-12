@@ -11,7 +11,6 @@
         var document;
         var video;
         var mediaSource;
-        var sourceBuffer;
         
         var xhr;
         
@@ -25,23 +24,19 @@
             video.addEventListener("play", onVideoPlay, false);
             video.addEventListener("pause", onVideoPause, false);
             
+            if (options["debug"]) {
+                attachVideoDebug(video);
+            }
+            
             initMediaSource();
         })();
         
         function onVideoPlay(e) {
-            sourceBuffer = mediaSource.addSourceBuffer(options["contentType"]);
-            sourceBuffer.addEventListener("updateend", function () {
-                
-                // seek to the start time of the buffer
-                if (video.currentTime === 0 && video.readyState > 0) {
-                    video.currentTime = sourceBuffer.buffered.start(0);
-                }
-            }, false);
-
             xhr = makeRequest(options["url"] + "?singleFragment=1", xhrReady);
         }
         
         function onVideoPause(e) {
+            xhr.removeEventListener("load", xhrReady, false);
             xhr.abort();
             initMediaSource();
         };
@@ -59,7 +54,7 @@
         function makeRequest(url, handler) {
             var xhr = new XMLHttpRequest();
             xhr.responseType = "arraybuffer";
-            xhr.onload = handler;
+            xhr.addEventListener("load", handler, false);
             xhr.open("GET", url, true);
             xhr.send();
             return xhr;
@@ -74,38 +69,64 @@
 
             var response = xhr.response;
             
-            // get find moof box
-            var offset = 0;
-            do {
-                var boxName = String.fromCharCode.apply(null, new Uint8Array(response.slice(offset + 4, (offset + 4) + 4)));
-                var boxLength = new DataView(response, offset, 4).getUint32(0);
-                //console.log(boxName, boxLength);
-
-                if (boxName == "moof") {
-                    break;
-                }
-
-                offset += boxLength;
-            } while (offset < response.byteLength);
-
-            // read sequence number out of moof box
-            var sequenceNumber = 0;
-            if (offset < response.byteLength) {
-                sequenceNumber = new DataView(response, offset + 20, 4).getUint32(0);
+            var sequenceHeader = xhr.getResponseHeader("X-Sequence");
+            if (sequenceHeader === null) {
+                throw "Response header X-Sequence not found.";
             }
+            var sequenceNumber = parseInt(sequenceHeader, 10);
             
             // process result
             var sourceBuffer;
             if (mediaSource.sourceBuffers.length > 0) {
                 sourceBuffer = mediaSource.sourceBuffers[0];
-                sourceBuffer.appendBuffer(response);
             } else {
-                console.log("ERROR: no source.");
-                return;
+                sourceBuffer = mediaSource.addSourceBuffer(xhr.getResponseHeader("Content-type"));
+                if (options["debug"]) {
+                    attachBufferDebug(sourceBuffer);
+                }
+                sourceBuffer.addEventListener("updateend", function () {
+                    // seek to the start time of the buffer
+                    if (video.currentTime === 0 && video.readyState > 0) {
+                        video.currentTime = sourceBuffer.buffered.start(0);
+                    }
+                }, false);
             }
+            sourceBuffer.appendBuffer(response);
             
             // request next fragment
             xhr = makeRequest(options["url"] + "?singleFragment=1&sendHeader=0&fragmentSequence=" + (sequenceNumber + 1), xhrReady);
+        }
+        
+        function attachVideoDebug(video) {
+            var events = ["loadstart", "progress", "suspend", "abort", "error", "emptied", "stalled", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "waiting", "seeking", "seeked", "ended", "durationchange", "timeupdate", "play", "pause", "ratechange", "resize", "volumechange"];
+            for (var i=0; i<events.length; i++) {
+                video.addEventListener(events[i], logVideoEvent);
+            }
+        }
+        
+        function attachBufferDebug(sourceBuffer) {
+            var events = ["updatestart", "update", "updateend", "error", "abort" ];
+            for (var i=0; i<events.length; i++) {
+                sourceBuffer.addEventListener(events[i], logVideoEvent);
+            }
+        }
+        
+        function logVideoEvent(e) {
+            var debugTable = document.getElementById("videoDebug");
+            if (!debugTable) {
+                debugTable = document.createElement("table");
+                debugTable.id = "videoDebug";
+                debugTable.innerHTML = '<tr><td>time</td><td>target</td><td>name</td><td>ct</td><td>ns</td><td>rs</td><td>dur</td><td>error</td><td>bc</td><td>last buffer</td></tr>';
+                document.body.appendChild(debugTable);
+            }
+            var tr = document.createElement("tr");
+            if (debugTable.children.length > 1) {
+                debugTable.insertBefore(tr, debugTable.children[1]);
+            } else {
+                debugTable.appendChild(tr);
+            }
+            var date = new Date();
+            tr.innerHTML = '<td>' + (date.getHours() + ":" + date.getMinutes() + ":<b>" + date.getSeconds() + "." + date.getMilliseconds()) + '</b></td><td>' + Object.getPrototypeOf(e.target).constructor.name + '</td><th>' + e.type + '</th><td>' + video.currentTime + '</td><td>' + video.networkState + '</td><td>' + video.readyState + '</td><td>' + video.duration + '</td><td>' + (video.error ? video.error.code : '-') + '</td><td>' + video.buffered.length + '</td><td>' + (video.buffered.length ? (video.buffered.start(video.buffered.length - 1) + " - " + video.buffered.end(video.buffered.length - 1)) : 0) + '</td>';
         }
 
     }

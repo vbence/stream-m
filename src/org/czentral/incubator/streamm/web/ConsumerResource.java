@@ -28,6 +28,7 @@ import org.czentral.minihttp.HTTPException;
 import org.czentral.minihttp.HTTPRequest;
 import org.czentral.minihttp.HTTPResource;
 import org.czentral.minihttp.HTTPResponse;
+import org.omg.PortableServer.REQUEST_PROCESSING_POLICY_ID;
 
 /**
  *
@@ -36,6 +37,8 @@ import org.czentral.minihttp.HTTPResponse;
 public class ConsumerResource implements HTTPResource {
     
     private final String STR_CONTENT_TYPE = "Content-type";
+    private final String STR_X_SEQUENCE = "X-Sequence";
+    private final String STR_METHOD_HEAD = "HEAD";
     
     protected Properties props;
 
@@ -69,13 +72,42 @@ public class ConsumerResource implements HTTPResource {
             throw new HTTPException(503, "Stream Not Running");
         }
         
+        // setting rsponse content-type
+        response.setParameter(STR_CONTENT_TYPE, stream.getMimeType());
+        
+        // end of HEAD response
+        if (request.getMethod().equals(STR_METHOD_HEAD)) {
+            response.getOutputStream();
+            return;
+        }
+        
+        // request GET parameters
+        String sendHeaderParam = getParameterWithDefault(request, "sendHeader", "true");
+        boolean sendHeader = !("0".equals(sendHeaderParam) || "false".equals(sendHeaderParam));
+        
+        String fragmentSequenceParam = getParameterWithDefault(request, "fragmentSequence", "-1");
+        int fragmentSequence = Integer.parseInt(fragmentSequenceParam, 10);
+                
+        String singleFragmentParam = getParameterWithDefault(request, "singleFragment", "false");
+        boolean singleFragment = !("0".equals(singleFragmentParam) || "false".equals(singleFragmentParam));
+        
+        
+        // setting rsponse sequence number (if needed)
+        if (singleFragment) {
+            String sequenceHeader;
+            
+            if (fragmentSequence > stream.getFragmentAge()) {
+                sequenceHeader = Integer.toString(fragmentSequence);
+            } else {
+                sequenceHeader = Integer.toString(stream.getFragmentAge());
+            }
+            response.setParameter(STR_X_SEQUENCE, sequenceHeader);
+        }
+
         // check if there are free slots
         if (!stream.subscribe(false)) {
             throw new HTTPException(503, "Resource Busy");
         }
-        
-        // setting rsponse content-type
-        response.setParameter(STR_CONTENT_TYPE, stream.getMimeType());
 
         // log transfer events (bandwidth usage)
         final int PACKET_SIZE = 24 * 1024;
@@ -85,19 +117,16 @@ public class ConsumerResource implements HTTPResource {
         StreamClient client = new StreamClient(stream, mos);
 
         // whether to send header
-        String sendHeaderParam = request.getParameter("sendHeader");
         if ("0".equals(sendHeaderParam) || "false".equals(sendHeaderParam)) {
             client.setSendHeader(false);
         }
         
         // start output with the requested fragment
-        String fragmentSequenceParam = request.getParameter("fragmentSequence");
         if (fragmentSequenceParam != null) {
             client.setRequestedFragmentSequence(Integer.parseInt(fragmentSequenceParam, 10));
         }
         
         // send only a single fragment
-        String singleFragmentParam = request.getParameter("singleFragment");
         if ("1".equals(singleFragmentParam) || "true".equals(singleFragmentParam)) {
             client.setSendSingleFragment(true);
         }
@@ -107,6 +136,11 @@ public class ConsumerResource implements HTTPResource {
 
         // freeing the slot
         stream.unsubscribe();
+    }
+    
+    private static String getParameterWithDefault(HTTPRequest request, String key, String defaultValue) {
+        String result = request.getParameter(key);
+        return result == null ? defaultValue : result;
     }
     
 }
