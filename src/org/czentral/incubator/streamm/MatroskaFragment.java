@@ -77,6 +77,10 @@ public class MatroskaFragment implements MovieFragment {
         clusterOffset = -1;
     }
     
+    public boolean hasCluster() {
+        return clusterOffset != -1;
+    }
+    
     public void appendKeyBlock(byte[] buffer, int offset, int length, int keyframeOffset) {
         if (keyframeOffset > 0) {
             keyBuffer = new Buffer(data, dataLength + (keyframeOffset - offset), length - (keyframeOffset - offset));
