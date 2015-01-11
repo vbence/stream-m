@@ -59,7 +59,12 @@ class HeaderDetectionState implements Processor {
         EBMLElement elem;
         
         // EBML root element
-        elem = new EBMLElement(buffer, offset, length);
+        try {
+           elem = new EBMLElement(buffer, offset, length);
+        } catch (RuntimeException e) {
+            // on EBML reading errors, need more data to be loaded
+            return 0;
+        }
         
         // if not EBML
         if (elem.getId() != ID_EBML)
