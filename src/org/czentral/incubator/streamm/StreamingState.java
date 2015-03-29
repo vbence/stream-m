@@ -24,6 +24,7 @@ import org.czentral.util.stream.Processor;
 class StreamingState implements Processor {
     
     private static final long ID_CLUSTER = 0x1F43B675;
+    private static final long ID_SEGMENT = 0x18538067;
     private static final long ID_SIMPLEBLOCK = 0xA3;
     private static final long ID_BLOCKGROUP = 0xA0;
     private static final long ID_TIMECODE = 0xE7;
@@ -58,7 +59,7 @@ class StreamingState implements Processor {
             /* Note: cluster check was moved to be the first because of the
              * possibility of infinite clusters (gstreamer's curlsink?).
              */
-            if (elem.getId() != ID_CLUSTER && elem.getEndOffset() > endOffset) {
+            if (elem.getId() != ID_CLUSTER && elem.getId() != ID_SEGMENT && elem.getEndOffset() > endOffset) {
                 
                 /* The element is not fully loaded: we need more data, so we end
                  * this processing cycle. The StreamInput will fill the buffer
@@ -158,7 +159,7 @@ class StreamingState implements Processor {
                 
             }
             
-            if (elem.getId() == ID_CLUSTER || elem.getDataSize() >= 0x100000000L) {
+            if (elem.getId() == ID_CLUSTER || elem.getId() == ID_SEGMENT || elem.getDataSize() >= 0x100000000L) {
                 offset = elem.getDataOffset();
             } else {
                 offset = elem.getEndOffset();
