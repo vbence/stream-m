@@ -335,8 +335,9 @@ class PublisherAppInstance implements ApplicationInstance {
                         + "." + audioObjectType;
 
                 int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
+                int audioSampleSize = metaData.containsKey("audiosamplesize") ? ((Double)metaData.get("audiosamplesize")).intValue() : 16;
                 int newTrackID = header.addAudioTrack(((Double)metaData.get("audiosamplerate")).intValue()
-                        , ((Double)metaData.get("audiosamplesize")).intValue()
+                        , audioSampleSize
                         , ((Double)metaData.get("audiodatarate")).intValue()
                         , decoderSpecificBytes);
                 
