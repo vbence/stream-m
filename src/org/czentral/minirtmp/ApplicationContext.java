@@ -153,7 +153,7 @@ public class ApplicationContext implements ChunkProcessor {
                         response.writeString("_error");
                         response.writeMixed(null);
                         response.writeMixed(null);
-                        writeCommand(mi.chunkStreamID, response);
+                        writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
                         return;
                     }
                     applicationInstance.onConnect(this);
@@ -166,7 +166,7 @@ public class ApplicationContext implements ChunkProcessor {
                     response.writeString("_error");
                     response.writeMixed(null);
                     response.writeMixed(null);
-                    writeCommand(mi.chunkStreamID, response);
+                    writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
                 }
             } else {
                 applicationInstance.invokeCommand(mi, command);
@@ -205,7 +205,7 @@ public class ApplicationContext implements ChunkProcessor {
         return new RTMPCommand("", 0d, null, arguments);
     }
     
-    public void writeCommand(int streamID, AMFPacket message) {
+    public void writeCommand(int streamID, int messageStreamID, AMFPacket message) {
         byte[] header = new byte[12];
         header[0] = (byte)((streamID) & 0x3f);
 
@@ -217,6 +217,11 @@ public class ApplicationContext implements ChunkProcessor {
 
         // message type
         header[7] = 0x14;
+
+        header[8] = (byte) ((messageStreamID >> 24) & 0xff);
+        header[9] = (byte) ((messageStreamID >> 16) & 0xff);
+        header[10] = (byte) ((messageStreamID >> 8) & 0xff);
+        header[11] = (byte) ((messageStreamID) & 0xff);
 
         // writing
         try {

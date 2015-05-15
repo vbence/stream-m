@@ -132,7 +132,7 @@ class PublisherAppInstance implements ApplicationInstance {
         response.writeNumber(command.getTxid());
         response.writeMixed(object);
         response.writeMixed(information);
-        context.writeCommand(mi.chunkStreamID, response);
+        context.writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
     }
     
     protected void sendSuccess(MessageInfo mi, RTMPCommand command) {
@@ -141,7 +141,7 @@ class PublisherAppInstance implements ApplicationInstance {
         response.writeNumber(command.getTxid());
         response.writeMixed(null);
         response.writeMixed(null);
-        context.writeCommand(mi.chunkStreamID, response);
+        context.writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
     }
     
     protected void cmdDeleteStream(MessageInfo mi, RTMPCommand command) {
@@ -150,7 +150,7 @@ class PublisherAppInstance implements ApplicationInstance {
         response.writeNumber(command.getTxid());
         response.writeMixed(null);
         response.writeMixed(null);
-        context.writeCommand(mi.chunkStreamID, response);
+        context.writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
         context.terminate();
     }
     
@@ -160,7 +160,7 @@ class PublisherAppInstance implements ApplicationInstance {
         response.writeNumber(command.getTxid());
         response.writeMixed(null);
         response.writeMixed(1d);
-        context.writeCommand(mi.chunkStreamID, response);
+        context.writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
     }
     
     protected void cmdConnect(MessageInfo mi, RTMPCommand command) {
@@ -184,10 +184,21 @@ class PublisherAppInstance implements ApplicationInstance {
         arg2.put("objectEncoding", 0d);
         response.writeObject(arg2);
 
-        context.writeCommand(mi.chunkStreamID, response);
+        context.writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
     }
 
     protected void cmdFCPublish(MessageInfo mi, RTMPCommand command) {
+        fcpublishTxID = command.getTxid();
+        sendSuccess(mi, command);
+    }
+    
+    protected void cmdPublish(MessageInfo mi, RTMPCommand command) {
+        
+        Object arg1 = command.getArguments().get(0);
+        if (!(arg1 instanceof String)) {
+            sendSuccess(mi, command);
+            return;
+        }
         
         String streamName = (String)command.getArguments().get(0);
         int separatorPos = streamName.indexOf(STREAM_NAME_SEPARATOR);
@@ -234,11 +245,7 @@ class PublisherAppInstance implements ApplicationInstance {
         context.getLimit().assemblyBufferSize = 256 * 1024;
         
         streamID = clientStreamID;
-        fcpublishTxID = command.getTxid();
-        sendSuccess(mi, command);
-    }
-    
-    protected void cmdPublish(MessageInfo mi, RTMPCommand command) {
+        
         AMFPacket response = new AMFPacket();
         response.writeString("onStatus");
         response.writeNumber(fcpublishTxID);
@@ -254,7 +261,7 @@ class PublisherAppInstance implements ApplicationInstance {
         arg2.put("objectEncoding", 0d);
         response.writeObject(arg2);
 
-        context.writeCommand(mi.chunkStreamID, response);
+        context.writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
     }
     
     @Override
