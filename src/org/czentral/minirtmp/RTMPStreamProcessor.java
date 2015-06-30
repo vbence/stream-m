@@ -125,7 +125,8 @@ class RTMPStreamProcessor implements Processor {
             type = (buffer[offset + 6] & 0xff);
             
             if (lastMessage != null && lastMessage.offset > 0 && lastMessage.offset < lastMessage.length) {
-                throw new RuntimeException("Unsupported feature encountered: LONG_HEAD_INSIDE_FRAGENT.");
+                lastMessage = null;
+                // throw new RuntimeException("Unsupported feature encountered: LONG_HEAD_INSIDE_FRAGENT.");
             }
 
             int msid = 0;
