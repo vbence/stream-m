@@ -299,6 +299,9 @@ class PublisherAppInstance implements ApplicationInstance {
             if (mi.type == 0x09) {
                 final int SKIP_BYTES = 5;
                 byte[] decoderSpecificBytes = new byte[payloadLength - SKIP_BYTES];
+                if (decoderSpecificBytes.length == 0) {
+                    return;
+                }
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, decoderSpecificBytes, 0, payloadLength - SKIP_BYTES);
                 
                 int codecConfig = (decoderSpecificBytes[1] & 0xff) << 16
