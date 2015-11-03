@@ -131,7 +131,7 @@ So we are going to usee them both together: VLC will access the audio, compress 
 
     ffmpeg -f vfwcap -r 16 -i 0 -i http://localhost:8089/ -g 52 \
     -acodec libvorbis -ab 64k -vcodec libvpx -vb 448k \
-    -f matroska http://example.com:8080/publish/first?password=secret`
+    -f matroska http://example.com:8080/publish/first?password=secret
 
 ### On Linux Systems
 
