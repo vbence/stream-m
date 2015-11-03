@@ -139,7 +139,7 @@ So we are going to usee them both together: VLC will access the audio, compress 
 
     ffmpeg -f video4linux2 -s 320x240 -r 16 -i /dev/video0 -f oss -i /dev/dsp \
     -g 52 -acodec libvorbis -ab 64k -vcodec libvpx -vb 448k \
-    -f webm http://example.com:8080/publish/first?password=secret`
+    -f webm http://example.com:8080/publish/first?password=secret
 
 
 ## PUBLISHING H.264
