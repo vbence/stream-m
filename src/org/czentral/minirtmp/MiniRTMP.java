@@ -91,7 +91,8 @@ public class MiniRTMP implements Runnable {
             HandshakeProcessor handshake = new HandshakeProcessor(os);
             feeder.feedTo(handshake);
             
-            ApplicationContext context = new ApplicationContext(os, limit, factory);
+            String clientId = sock.getRemoteSocketAddress().toString();
+            ApplicationContext context = new ApplicationContext(os, limit, factory, clientId);
             feeder.feedTo(new RTMPStreamProcessor(limit, context));
             
             try {

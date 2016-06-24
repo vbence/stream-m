@@ -19,12 +19,14 @@
 
 package org.czentral.incubator.streamm;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.czentral.data.binary.AnnotationMapSerializationContext;
 import org.czentral.data.binary.BitBuffer;
 import org.czentral.data.binary.Serializer;
+import org.czentral.format.flv.VideoTag;
 import org.czentral.format.mp4.DecoderConfigDescriptor;
 import org.czentral.minirtmp.AMFPacket;
 import org.czentral.minirtmp.ApplicationContext;
@@ -46,6 +48,16 @@ class PublisherAppInstance implements ApplicationInstance {
     
     private static final char STREAM_NAME_SEPARATOR = '?';
     
+    private static final int FRAME_TYPE_KEYFRAME = 0x01;
+    private static final int FRAME_TYPE_INTER_FRAME = 0x02;
+    
+    private static long MAX_DRIFT_MS = 200;
+    
+    private static int NAL_TYPE_SPS = 7;
+    private static int NAL_TYPE_PPS = 8;
+    private static int NAL_TYPE_SPS_EXTENSION = 13;
+    private static int NAL_TYPE_SLICE_NONIDR = 1;
+    private static int NAL_TYPE_SLICE_IDR = 5;
     
     protected ApplicationContext context;
 
@@ -297,12 +309,34 @@ class PublisherAppInstance implements ApplicationInstance {
             }
             
             if (mi.type == 0x09) {
+                //HexDump.displayHex(readBuffer, payloadOffset, Math.min(payloadLength, 32));
+                VideoTag tag = VideoTag.parse(ByteBuffer.wrap(readBuffer, payloadOffset, payloadLength));
+                
+                if (tag.getCodec() != VideoTag.Codec.AVC) {
+                    throw new RuntimeException("Only AVC codec suported.");
+                }
+                
+                if (tag.getAvcType() != VideoTag.AvcType.SEQUENCE_HEADER) {
+                    throw new RuntimeException("First frame expected to contain Sequence Header.");
+                }
+                
                 final int SKIP_BYTES = 5;
                 byte[] decoderSpecificBytes = new byte[payloadLength - SKIP_BYTES];
                 if (decoderSpecificBytes.length == 0) {
                     return;
                 }
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, decoderSpecificBytes, 0, payloadLength - SKIP_BYTES);
+                
+                //HexDump.displayHex(decoderSpecificBytes, 0, Math.min(decoderSpecificBytes.length, 32));
+                int nalHead = decoderSpecificBytes[1];
+                int nalRefIdc = (nalHead & 0b01100000) >> 5;
+                int nalType = (nalHead & 0b011111);
+                
+                if (nalType != NAL_TYPE_PPS
+                        && nalType != NAL_TYPE_SPS
+                        && nalType != NAL_TYPE_SPS_EXTENSION) {
+                    throw new RuntimeException("SPS/PPS expected, got type " + nalType + ".");
+                }
                 
                 int codecConfig = (decoderSpecificBytes[1] & 0xff) << 16
                         | (decoderSpecificBytes[2] & 0xff) << 8
@@ -352,10 +386,11 @@ class PublisherAppInstance implements ApplicationInstance {
         }
         
         // need to flush old fragment
+        int frameType = (readBuffer[payloadOffset] & 0xf0) >> 4;
         if (builder != null
                 && builder.getDataLength() >= MINIMAL_FRAGMENT_SIZE
                 && trackInfo.type == TrackInfo.Type.VIDEO
-                && (readBuffer[payloadOffset] & 0xf0) == 0x10) {
+                && frameType == FRAME_TYPE_KEYFRAME) {
             
             // start stream if not already started
             if (!streamStarted) {
@@ -379,7 +414,32 @@ class PublisherAppInstance implements ApplicationInstance {
             
             /* if (builder.getDataLength() > 0)
                 return; */
-           
+            
+            VideoTag tag = VideoTag.parse(ByteBuffer.wrap(readBuffer, payloadOffset, payloadLength));
+            
+            //HexDump.displayHex(readBuffer, payloadOffset, Math.min(payloadLength, 32));
+            int nalHead = readBuffer[payloadOffset + 1];
+            int nalRefIdc = (nalHead & 0b01100000) >> 5;
+            int nalType = (nalHead & 0b011111);
+            
+            if (tag.getFrameType() == VideoTag.FrameType.KEYFRAME) {
+                if (nalType != NAL_TYPE_SLICE_IDR) {
+                    throw new RuntimeException("Expected IDR slice. Got " + nalType + ".");
+                }
+            }
+            
+            if (tag.getFrameType() == VideoTag.FrameType.INTER) {
+                if (nalType != NAL_TYPE_SLICE_NONIDR) {
+                    throw new RuntimeException("Expected non-IDR slice. got " + nalType + ".");
+                }
+            }
+
+            //System.out.println("tt:" + trackInfo.timeMs + " ft:" + mi.calculatedTimestamp);
+            
+            if (Math.abs(trackInfo.timeMs - mi.calculatedTimestamp) > MAX_DRIFT_MS) {
+                throw new RuntimeException("RTMP timestamps diverged from estimation.");
+            }
+            
             final int SKIP_BYTES = 5;
             int offset = payloadOffset + 2;
             int compositionTime = (readBuffer[offset++] & 0xff) << 16 | (readBuffer[offset++] & 0xff) << 8 | (readBuffer[offset++] & 0xff);

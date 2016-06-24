@@ -31,6 +31,7 @@ public class MessageInfo {
     public int messageStreamID;
     public long absoluteTimestamp;
     public long relativeTimestamp;
+    public long calculatedTimestamp;
 
     public MessageInfo(int chunkStreamID, int type, int length) {
         this.chunkStreamID = chunkStreamID;

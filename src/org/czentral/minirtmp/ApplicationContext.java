@@ -24,6 +24,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -44,13 +47,21 @@ public class ApplicationContext implements ChunkProcessor {
     protected ApplicationLibrary library;
     
     protected ApplicationInstance applicationInstance;
+    
+    protected String clientId;
 
-    public ApplicationContext(OutputStream outputStream, ResourceLimit limit, ApplicationLibrary factory) {
+    private static final Logger LOG = Logger.getLogger(ApplicationContext.class.getName());
+    
+    public ApplicationContext(OutputStream outputStream, ResourceLimit limit, ApplicationLibrary library, String clientId) {
         this.outputStream = outputStream;
         this.limit = limit;
-        this.library = factory;
+        this.library = library;
+        this.clientId = clientId;
     }
 
+    public ApplicationContext(OutputStream outputStream, ResourceLimit limit, ApplicationLibrary factory) {
+        this(outputStream, limit, factory, UUID.randomUUID().toString());
+    }
 
     /**
      * Get the value of outputStream
@@ -137,46 +148,58 @@ public class ApplicationContext implements ChunkProcessor {
         int type = mi.type;
         AMFDecoder ac = new AMFDecoder(buffer, payloadOffset, payloadLength);
         
-        if (type == 0x14) {
-            RTMPCommand command = readCommand(ac);
-            
-            if (applicationInstance == null) {
-                
-                if (command.getName().equals("connect")) {
+        try {
+            if (type == 0x14) {
+                RTMPCommand command = readCommand(ac);
 
-                    String appName = (String)command.getCommandObject().get("app");
-                    try {
-                        Application app = library.getApplication(appName);
-                        applicationInstance = app.getInstance();
-                    } catch (ApplicationNotFoundException e) {
+                if (applicationInstance == null) {
+
+                    if (command.getName().equals("connect")) {
+
+                        String appName = (String)command.getCommandObject().get("app");
+                        try {
+                            Application app = library.getApplication(appName);
+                            applicationInstance = app.getInstance();
+                        } catch (ApplicationNotFoundException e) {
+                            AMFPacket response = new AMFPacket();
+                            response.writeString("_error");
+                            response.writeMixed(null);
+                            response.writeMixed(null);
+                            writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
+                            return;
+                        }
+                        applicationInstance.onConnect(this);
+
+                        applicationInstance.invokeCommand(mi, command);
+
+                    } else {
+
                         AMFPacket response = new AMFPacket();
                         response.writeString("_error");
                         response.writeMixed(null);
                         response.writeMixed(null);
                         writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
-                        return;
                     }
-                    applicationInstance.onConnect(this);
-
-                    applicationInstance.invokeCommand(mi, command);
-
                 } else {
-
-                    AMFPacket response = new AMFPacket();
-                    response.writeString("_error");
-                    response.writeMixed(null);
-                    response.writeMixed(null);
-                    writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
+                    applicationInstance.invokeCommand(mi, command);
                 }
-            } else {
-                applicationInstance.invokeCommand(mi, command);
+
+            } else if (type == 0x12) {
+                RTMPCommand command = readData(ac);
+                applicationInstance.onData(mi, command);
+            } else if (type == 0x08 || type == 0x09) {
+                applicationInstance.mediaChunk(mi, buffer, payloadOffset, payloadLength);
             }
+        } catch (Exception ex) {
+            LOG.log(Level.WARNING, clientId, ex);
             
-        } else if (type == 0x12) {
-            RTMPCommand command = readData(ac);
-            applicationInstance.onData(mi, command);
-        } else if (type == 0x08 || type == 0x09) {
-            applicationInstance.mediaChunk(mi, buffer, payloadOffset, payloadLength);
+            AMFPacket response = new AMFPacket();
+            response.writeString("_error");
+            response.writeMixed(null);
+            response.writeMixed(null);
+            writeCommand(mi.chunkStreamID, mi.messageStreamID, response);
+            
+            throw new RuntimeException(ex);
         }
         
     }

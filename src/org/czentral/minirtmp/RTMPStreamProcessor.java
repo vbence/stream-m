@@ -130,11 +130,13 @@ class RTMPStreamProcessor implements Processor {
             }
 
             int msid = 0;
+            long lastTimestamp = 0;
             if (headLength >= 11) {
                 msid = (buffer[offset + 7] & 0xff) << 24 | (buffer[offset + 8] & 0xff) << 16 | (buffer[offset + 9] & 0xff) << 8 | (buffer[offset + 10] & 0xff);
             } else {
                 if (lastMessage != null) {
-                    msid = lastMessage.messageStreamID; 
+                    msid = lastMessage.messageStreamID;
+                    lastTimestamp = lastMessage.calculatedTimestamp;
                 }
             }
 
@@ -145,8 +147,10 @@ class RTMPStreamProcessor implements Processor {
             int timeStamp = (buffer[offset + 0] & 0xff) << 16 | (buffer[offset + 1] & 0xff) << 8 | (buffer[offset + 2] & 0xff);
             if (headLength >= 11) {
                 lastMessage.absoluteTimestamp = timeStamp;
+                lastMessage.calculatedTimestamp = timeStamp;
             } else {
                 lastMessage.relativeTimestamp = timeStamp;
+                lastMessage.calculatedTimestamp = lastTimestamp + timeStamp;
             }
             
             lastMessages.put(sid, lastMessage);
