@@ -20,7 +20,7 @@
 package org.czentral.data.binary;
 
 /**
- *
+ 
  * @author Varga Bence (vbence@czentral.org)
  */
 public class BitBuffer {
