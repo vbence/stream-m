@@ -119,7 +119,7 @@ public class Bootstrap {
 
             String rtmpPortProp = props.getProperty("rtmp.port");
             if (rtmpPortProp == null) {
-                throw new RuntimeException("Config option not found: http.port.");
+                throw new RuntimeException("Config option not found: rtmp.port.");
             }
             int rtmpPort = Integer.parseInt(rtmpPortProp);
             MiniRTMP server = new MiniRTMP(rtmpPort, library);
