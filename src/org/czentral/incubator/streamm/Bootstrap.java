@@ -78,38 +78,40 @@ public class Bootstrap {
             if (httpPortProp == null) {
                 throw new RuntimeException("Config option not found: http.port.");
             }
-            int httpPort = Integer.parseInt(httpPortProp);
-            MiniHTTP server = new MiniHTTP(httpPort);
+            else {
+                int httpPort = Integer.parseInt(httpPortProp);
+                MiniHTTP server = new MiniHTTP(httpPort);
 
-            PublisherResource publish = new PublisherResource(props, streams);
-            server.registerResource("/publish", publish);
+                PublisherResource publish = new PublisherResource(props, streams);
+                server.registerResource("/publish", publish);
 
-            ConsumerResource consume = new ConsumerResource(props, streams);
-            server.registerResource("/consume", consume);
+                ConsumerResource consume = new ConsumerResource(props, streams);
+                server.registerResource("/consume", consume);
 
-            SnapshotResource snapshot = new SnapshotResource(props, streams);
-            server.registerResource("/snapshot", snapshot);
+                SnapshotResource snapshot = new SnapshotResource(props, streams);
+                server.registerResource("/snapshot", snapshot);
 
-            InfoResource info = new InfoResource(props, streams);
-            server.registerResource("/info", info);
-            
-            // mapped static files
-            for (FileShareInfo shareInfo : getSharedResources(PREFIX_STATIC, props)) {
-                FileResource resource = new FileResource(shareInfo.fileName);
-                server.registerResource(shareInfo.url, resource);
-            }
+                InfoResource info = new InfoResource(props, streams);
+                server.registerResource("/info", info);
 
-            // mapped zip files
-            for (FileShareInfo shareInfo : getSharedResources(PREFIX_ZIP, props)) {
-                try {
-                    ZipResource resource = new ZipResource(shareInfo.fileName);
+                // mapped static files
+                for (FileShareInfo shareInfo : getSharedResources(PREFIX_STATIC, props)) {
+                    FileResource resource = new FileResource(shareInfo.fileName);
                     server.registerResource(shareInfo.url, resource);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
                 }
+
+                // mapped zip files
+                for (FileShareInfo shareInfo : getSharedResources(PREFIX_ZIP, props)) {
+                    try {
+                        ZipResource resource = new ZipResource(shareInfo.fileName);
+                        server.registerResource(shareInfo.url, resource);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                server.start();
             }
-            
-            server.start();
         }
         
         // RTMP
@@ -121,10 +123,12 @@ public class Bootstrap {
             if (rtmpPortProp == null) {
                 throw new RuntimeException("Config option not found: rtmp.port.");
             }
-            int rtmpPort = Integer.parseInt(rtmpPortProp);
-            MiniRTMP server = new MiniRTMP(rtmpPort, library);
-            
-            server.start();
+            else {
+                int rtmpPort = Integer.parseInt(rtmpPortProp);
+                MiniRTMP server = new MiniRTMP(rtmpPort, library);
+
+                server.start();
+            }
         }
     
     }
