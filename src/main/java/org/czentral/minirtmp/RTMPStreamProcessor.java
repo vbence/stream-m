@@ -155,7 +155,7 @@ class RTMPStreamProcessor implements Processor {
             
             lastMessages.put(sid, lastMessage);
             if (lastMessages.size() > limit.chunkStreamCount) {
-                throw new RuntimeException("Unsupported feature encountered: TOO_MANY_STREAMS. Current limit is " + limit.chunkStreamCount + ".");
+                throw new RuntimeException("Unsupported feature encountered: TOO_MANY_STREAMS. Current limit is " + limit.chunkStreamCount + "");
             }
             
             if (fullLength > chunkSize) {
@@ -196,9 +196,9 @@ class RTMPStreamProcessor implements Processor {
             return 0;
         }
         
-        //System.err.println("code: " + code + ", sid: " + sid + ", type: " + type + ", length: " + payloadLength);
-        //System.err.println(HexDump.prettyPrintHex(buffer, bufferOffset, sidLength + headLength + payloadLength));
-        //System.err.println(HexDump.prettyPrintHex(buffer, bufferOffset, Math.min(16, sidLength + headLength + payloadLength)));
+        System.err.println("code: " + code + ", sid: " + sid + ", type: " + type + ", length: " + payloadLength);
+        System.err.println(HexDump.prettyPrintHex(buffer, bufferOffset, sidLength + headLength + payloadLength));
+        System.err.println(HexDump.prettyPrintHex(buffer, bufferOffset, Math.min(16, sidLength + headLength + payloadLength)));
         
         // change chunk size command processed
         int readOffset = offset + headLength;

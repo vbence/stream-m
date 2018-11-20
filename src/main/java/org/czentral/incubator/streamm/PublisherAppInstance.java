@@ -292,13 +292,9 @@ class PublisherAppInstance implements ApplicationInstance {
     @Override
     public void mediaChunk(MessageInfo mi, byte[] readBuffer, int payloadOffset, int payloadLength) {
 
-        /*
-        Augment chunkStreamId with media information. Some clients
-        (ffmpeg / avconv) use the same stream for both audio and video tracks.
-        */
-        int fakeStreamId = mi.chunkStreamID | (mi.type == 0x09 ? 0x80000000 : 0);
+        int trackId = mi.messageStreamID <<1 | (mi.type == 0x09 ? 1 : 0);
         
-        TrackInfo trackInfo = streamToTrack.get(fakeStreamId);
+        TrackInfo trackInfo = streamToTrack.get(trackId);
         
         if (trackInfo == null) {
             
@@ -335,7 +331,7 @@ class PublisherAppInstance implements ApplicationInstance {
                 if (nalType != NAL_TYPE_PPS
                         && nalType != NAL_TYPE_SPS
                         && nalType != NAL_TYPE_SPS_EXTENSION) {
-                    throw new RuntimeException("SPS/PPS expected, got type " + nalType + ".");
+                    System.err.println("SPS/PPS expected, got type " + nalType + "");
                 }
                 
                 int codecConfig = (decoderSpecificBytes[1] & 0xff) << 16
@@ -353,7 +349,7 @@ class PublisherAppInstance implements ApplicationInstance {
                         , decoderSpecificBytes);
                 
                 trackInfo = new TrackInfo(newTrackID, TrackInfo.Type.VIDEO, timescale);
-                streamToTrack.put(fakeStreamId, trackInfo);
+                streamToTrack.put(trackId, trackInfo);
                 
             } else if (mi.type == 0x08) {
                 final int SKIP_BYTES = 2;
@@ -369,7 +365,7 @@ class PublisherAppInstance implements ApplicationInstance {
                 }
                 codecDescription += (codecDescription.length() > 0 ? "," : "")
                         + "mp4a." + Integer.toHexString(0x100 | DecoderConfigDescriptor.PROFILE_AAC_MAIN).substring(1)
-                        + "." + audioObjectType;
+                        + "" + audioObjectType;
 
                 int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
                 int audioSampleSize = metaData.containsKey("audiosamplesize") ? ((Double)metaData.get("audiosamplesize")).intValue() : 16;
@@ -379,7 +375,7 @@ class PublisherAppInstance implements ApplicationInstance {
                         , decoderSpecificBytes);
                 
                 trackInfo = new TrackInfo(newTrackID, TrackInfo.Type.AUDIO, timescale);
-                streamToTrack.put(fakeStreamId, trackInfo);
+                streamToTrack.put(trackId, trackInfo);
             }
             
             return;
@@ -406,7 +402,7 @@ class PublisherAppInstance implements ApplicationInstance {
         
         // create builder if none exists
         if (builder == null) {
-            builder = new Mp4FragmentBuilder(fragmentSequence++, trackInfo.timeMs);
+            builder = new Mp4FragmentBuilder(fragmentSequence++, mi.calculatedTimestamp);
             //System.out.println("---");
         }
 
@@ -424,21 +420,23 @@ class PublisherAppInstance implements ApplicationInstance {
             
             if (tag.getFrameType() == VideoTag.FrameType.KEYFRAME) {
                 if (nalType != NAL_TYPE_SLICE_IDR) {
-                    throw new RuntimeException("Expected IDR slice. Got " + nalType + ".");
+                    throw new RuntimeException("Expected IDR slice. Got " + nalType + "");
                 }
             }
             
             if (tag.getFrameType() == VideoTag.FrameType.INTER) {
                 if (nalType != NAL_TYPE_SLICE_NONIDR) {
-                    throw new RuntimeException("Expected non-IDR slice. got " + nalType + ".");
+                    throw new RuntimeException("Expected non-IDR slice. got " + nalType + "");
                 }
             }
 
             //System.out.println("tt:" + trackInfo.timeMs + " ft:" + mi.calculatedTimestamp);
             
+            /*
             if (Math.abs(trackInfo.timeMs - mi.calculatedTimestamp) > MAX_DRIFT_MS) {
                 throw new RuntimeException("RTMP timestamps diverged from estimation.");
             }
+            */
             
             final int SKIP_BYTES = 5;
             int offset = payloadOffset + 2;
