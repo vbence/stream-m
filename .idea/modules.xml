@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/stream-m.iml" filepath="$PROJECT_DIR$/stream-m.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/stream-m_main.iml" filepath="$PROJECT_DIR$/.idea/modules/stream-m_main.iml" group="stream-m" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/stream-m_test.iml" filepath="$PROJECT_DIR$/.idea/modules/stream-m_test.iml" group="stream-m" />
+    </modules>
+  </component>
+</project>
