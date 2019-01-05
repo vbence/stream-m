@@ -49,20 +49,20 @@ streams.first.limit = 100
 
 # zip.<resourcename>
 # if the value is "true" or "1" then the resource will be created
-zip.console = true
+#zip.console = true
 
 # zip.<resourcename>.file
 # determines the path and name of the zip file to open
-zip.console.file = console.zip
+#zip.console.file = console.zip
 
 # static.<resourcename>.file
 # determines the virtual (web) path under which the contents of this
 # ZIP archive will be exposed
-zip.console.url = /console
+#zip.console.url = /console
 
 
 # Player Demo
 # Access it on the URL: /player-demo/player.html
-zip.player-demo = true
-zip.player-demo.file = player-demo.zip
-zip.player-demo.url = /player-demo
+#zip.player-demo = true
+#zip.player-demo.file = player-demo.zip
+#zip.player-demo.url = /player-demo
