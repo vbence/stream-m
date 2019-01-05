@@ -31,6 +31,7 @@ import org.czentral.minirtmp.ApplicationContext;
 import org.czentral.minirtmp.MessageInfo;
 import org.czentral.minirtmp.ApplicationInstance;
 import org.czentral.minirtmp.RTMPCommand;
+import org.czentral.util.stream.TimeInstant;
 
 /**
  *
@@ -448,7 +449,7 @@ class PublisherAppInstance implements ApplicationInstance {
                 }
             } */
             
-            builder.addFrame(trackInfo.trackID, (int)(compositionTime * trackInfo.timescale / 1000 / VIDEO_TIMESCALE_MULTIPLIER + 0.5) * VIDEO_TIMESCALE_MULTIPLIER, trackInfo.timeMs * trackInfo.timescale / 1000, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+            builder.addFrame(trackInfo.trackID, (int)(compositionTime * trackInfo.timescale / 1000 / VIDEO_TIMESCALE_MULTIPLIER + 0.5) * VIDEO_TIMESCALE_MULTIPLIER, new TimeInstant(trackInfo.timescale, trackInfo.timeMs * trackInfo.timescale / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
             //System.out.println("vtime(" + trackInfo.trackID + "): " + trackInfo.timeMs);
 
             trackInfo.timeMs += 1d / (trackInfo.timescale / VIDEO_TIMESCALE_MULTIPLIER) * 1000;
@@ -456,7 +457,7 @@ class PublisherAppInstance implements ApplicationInstance {
         } else if (mi.type == 0x08) {
             
             final int SKIP_BYTES = 2;
-            builder.addFrame(trackInfo.trackID, 0, trackInfo.timeMs * trackInfo.timescale / 1000, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+            builder.addFrame(trackInfo.trackID, 0, new TimeInstant(trackInfo.timescale, trackInfo.timeMs * trackInfo.timescale / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
             //System.out.println("atime(" + trackInfo.trackID + "): " + trackInfo.timeMs);
             
             trackInfo.timeMs += 1d / trackInfo.timescale * 1024 * 1000;
