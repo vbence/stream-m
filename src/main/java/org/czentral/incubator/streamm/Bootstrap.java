@@ -133,7 +133,7 @@ public class Bootstrap {
             if (key.startsWith(prefix)) {
                 
                 String resourceID = key.substring(prefix.length());
-                if (resourceID.contains("")) {
+                if (resourceID.contains(".")) {
                     continue;
                 }
 
