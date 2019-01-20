@@ -364,7 +364,7 @@ class PublisherAppInstance implements ApplicationInstance {
                 }
                 codecDescription += (codecDescription.length() > 0 ? "," : "")
                         + "mp4a." + Integer.toHexString(0x100 | DecoderConfigDescriptor.PROFILE_AAC_MAIN).substring(1)
-                        + "" + audioObjectType;
+                        + "." + audioObjectType;
 
                 int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
                 int audioSampleSize = metaData.containsKey("audiosamplesize") ? ((Double)metaData.get("audiosamplesize")).intValue() : 16;
