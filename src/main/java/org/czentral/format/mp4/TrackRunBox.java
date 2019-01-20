@@ -34,6 +34,7 @@ public class TrackRunBox extends FullBox {
     public static final int FLAG_FIRST_SAMPLE_FLAGS_PRESENT = 0x004;
     public static final int FLAG_DATA_OFFSET_PRESENT = 0x001;
     public static final int FLAG_SAMPLE_SIZE_PRESENT = 0x200;
+    public static final int FLAG_SAMPLE_DURATION_PRESENT = 0x100;
     public static final int FLAG_SAMPLE_COMPOSITION_TIME_OFFSET_PRESENT = 0x800;
     
     protected long sampleCount;

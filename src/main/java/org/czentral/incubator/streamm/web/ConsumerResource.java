@@ -26,7 +26,6 @@ import org.czentral.minihttp.HTTPException;
 import org.czentral.minihttp.HTTPRequest;
 import org.czentral.minihttp.HTTPResource;
 import org.czentral.minihttp.HTTPResponse;
-import org.omg.PortableServer.REQUEST_PROCESSING_POLICY_ID;
 
 /**
  *

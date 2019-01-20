@@ -15,30 +15,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.czentral.util.stream;
+package org.czentral.minirtmp;
 
-public class TimeInstant {
-    private long ticksPerSecond;
-    private long ticks;
-
-    public TimeInstant(long ticksPerSecond, long ticks) {
-        this.ticksPerSecond = ticksPerSecond;
-        this.ticks = ticks;
+public class RtmpException extends Exception {
+    public RtmpException() {
+        super();
     }
 
-    public long getTicksPerSecond() {
-        return ticksPerSecond;
-    }
-
-    public long getTicks() {
-        return ticks;
-    }
-
-    public long getMillis() {
-        return Math.round(1000 * (double)ticks / ticksPerSecond);
-    }
-
-    public TimeInstant transposed(long ticksDelta) {
-        return new TimeInstant(ticksPerSecond, ticks + ticksDelta);
+    public RtmpException(String message) {
+        super(message);
     }
 }

@@ -449,18 +449,24 @@ class PublisherAppInstance implements ApplicationInstance {
                 }
             } */
             
-            builder.addFrame(trackInfo.trackID, (int)(compositionTime * trackInfo.timescale / 1000 / VIDEO_TIMESCALE_MULTIPLIER + 0.5) * VIDEO_TIMESCALE_MULTIPLIER, new TimeInstant(trackInfo.timescale, trackInfo.timeMs * trackInfo.timescale / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
-            //System.out.println("vtime(" + trackInfo.trackID + "): " + trackInfo.timeMs);
+            builder.addFrame(trackInfo.trackID, (int)(compositionTime * trackInfo.timing.getTicksPerSecond() / 1000 / VIDEO_TIMESCALE_MULTIPLIER + 0.5) * VIDEO_TIMESCALE_MULTIPLIER, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+            //System.out.printf("v (%d) %d %d: %d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, trackInfo.timing.getMillis() - mi.calculatedTimestamp);
 
-            trackInfo.timeMs += 1d / (trackInfo.timescale / VIDEO_TIMESCALE_MULTIPLIER) * 1000;
-        
+            trackInfo.timing = trackInfo.timing.transposed(VIDEO_TIMESCALE_MULTIPLIER);
+
         } else if (mi.type == 0x08) {
             
             final int SKIP_BYTES = 2;
-            builder.addFrame(trackInfo.trackID, 0, new TimeInstant(trackInfo.timescale, trackInfo.timeMs * trackInfo.timescale / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
-            //System.out.println("atime(" + trackInfo.trackID + "): " + trackInfo.timeMs);
-            
-            trackInfo.timeMs += 1d / trackInfo.timescale * 1024 * 1000;
+            builder.addFrame(trackInfo.trackID, 0, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+
+            //System.out.printf("a (%d) %d %d: %d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, trackInfo.timing.getMillis() - mi.calculatedTimestamp);
+            /*
+            if (Math.abs(trackInfo.timeMs - mi.calculatedTimestamp) > MAX_DRIFT_MS) {
+                throw new RuntimeException("RTMP timestamps diverged from estimation.");
+            }
+            */
+
+            trackInfo.timing = trackInfo.timing.transposed(1024);
         }
         
         //HexDump.displayHex(readBuffer, payloadOffset, Math.min(payloadLength, 32));
@@ -510,14 +516,9 @@ class PublisherAppInstance implements ApplicationInstance {
         public int trackID = -1;
         
         public Type type = Type.UNKNOWN;
-        
-        public int timescale = -1;
-        
-        public long timeMs = 0;
-        
-        public TrackInfo() {
-        }
-        
+
+        public TimeInstant timing;
+
         public TrackInfo(int trackID, Type type) {
             this.trackID = trackID;
             this.type = type;
@@ -525,7 +526,7 @@ class PublisherAppInstance implements ApplicationInstance {
 
         public TrackInfo(int trackID, Type type, int timescale) {
             this(trackID, type);
-            this.timescale = timescale;
+            this.timing = new TimeInstant(timescale, 0);
         }
 
     }
