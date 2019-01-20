@@ -18,7 +18,6 @@
 package org.czentral.incubator.streamm;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,7 @@ import org.czentral.format.mp4.TrackFragmentBox;
 import org.czentral.format.mp4.TrackFragmentHeaderBox;
 import org.czentral.format.mp4.TrackRunBox;
 import org.czentral.util.stream.Buffer;
+import org.czentral.util.stream.TimeInstant;
 
 /**
  *
@@ -58,6 +58,8 @@ public class Mp4FragmentBuilder {
     //private final MovieFragmentBox moof;
     
     //private final MovieDataBox mdat;
+
+    private static final int TIMESCALE = 1000;
     
     private final Map<Integer, TrackInfo> tracks = new TreeMap<>();
     
@@ -71,7 +73,7 @@ public class Mp4FragmentBuilder {
         styp = new SegmentTypeBox("msdh", 0, new String[] {"msdh", "msix"});
         sidx = new SegmentIndexBox();
         sidx.setReferenceID(1);
-        sidx.setTimescale(1000);
+        sidx.setTimescale(TIMESCALE);
         sidx.setReferenceCount(1);
         sidx.setEarliestPresentationTime(initialTime);
 
@@ -93,8 +95,8 @@ public class Mp4FragmentBuilder {
         //mdat = new MovieDataBox();
     }
         
-    public void addFrame(int trackID, int timeOffset, long trackTime, byte[] buffer, int offset, int length) {
-        TrackInfo info = getTrackInfo(trackID, trackTime);
+    public void addFrame(int trackID, int timeOffset, TimeInstant trackTime, byte[] buffer, int offset, int length) {
+        TrackInfo info = getTrackInfo(trackID, trackTime.getTicks());
         
         info.framingData.putInt(length);
         info.framingData.putInt(timeOffset);

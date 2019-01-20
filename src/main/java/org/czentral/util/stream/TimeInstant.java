@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Bence Varga
+ * Copyright 2019 Bence Varga
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -15,38 +15,26 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    id 'java'
-    id 'application'
-}
+package org.czentral.util.stream;
 
-group 'org.czentral'
-version '1.0-SNAPSHOT'
+public class TimeInstant {
+    private long ticksPerSecond;
+    private long ticks;
 
-sourceCompatibility = 1.8
+    public TimeInstant(long ticksPerSecond, long ticks) {
+        this.ticksPerSecond = ticksPerSecond;
+        this.ticks = ticks;
+    }
 
-repositories {
-    mavenCentral()
-}
+    public long getTicksPerSecond() {
+        return ticksPerSecond;
+    }
 
-mainClassName = "org.czentral.incubator.streamm.Bootstrap"
+    public long getTicks() {
+        return ticks;
+    }
 
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-}
-
-task player(type: Zip) {
-    from fileTree(dir: 'src/main/html/player-demo')
-    include '*'
-    archiveName 'player-demo.zip'
-    destinationDir(file('build/libs'))
-}
-
-task release(type: Zip) {
-    from tasks.jar.outputs.files
-    from tasks.player.outputs.files
-    from 'LICENSE.txt'
-    from 'README.md'
-    archiveName project.name + '-' + project.version + '-dist.zip'
-    destinationDir(file('build'))
+    public long getMillis() {
+        return Math.round(1000 * (double)ticks / ticksPerSecond);
+    }
 }
