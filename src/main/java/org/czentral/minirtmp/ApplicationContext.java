@@ -18,6 +18,7 @@
 package org.czentral.minirtmp;
 
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -100,8 +101,13 @@ public class ApplicationContext implements ChunkProcessor {
     
     @Override
     public void processChunk(MessageInfo mi, byte[] readBuffer, int payloadOffset, int payloadLength) {
-        
-        boolean fragmented = (mi.length > payloadLength);
+        processChunk(mi, ByteBuffer.wrap(readBuffer, payloadOffset, payloadLength));
+    }
+
+    public void processChunk(MessageInfo mi, ByteBuffer buffer) {
+
+        int payloadLength = buffer.remaining();
+        boolean fragmented = (mi.length > buffer.remaining());
         if (fragmented) {
             AssemblyBuffer assemblyBuffer = assemblyBuffers.get(mi.chunkStreamID);
             
@@ -123,8 +129,9 @@ public class ApplicationContext implements ChunkProcessor {
                 assemblyBuffer = new AssemblyBuffer(mi.length);
                 assemblyBuffers.put(mi.chunkStreamID, assemblyBuffer);
             }
-            
-            System.arraycopy(readBuffer, payloadOffset, assemblyBuffer.array, mi.offset, payloadLength);
+
+            buffer.get(assemblyBuffer.array, mi.offset, buffer.remaining());
+            //System.arraycopy(readBuffer, payloadOffset, assemblyBuffer.array, mi.offset, payloadLength);
 
             boolean assembled = (mi.offset + payloadLength >= mi.length);
             if (assembled) {
@@ -133,8 +140,9 @@ public class ApplicationContext implements ChunkProcessor {
             }
             
         } else {
-            byte[] resultBuffer = new byte[payloadLength];
-            System.arraycopy(readBuffer, payloadOffset, resultBuffer, 0, payloadLength);
+            byte[] resultBuffer = new byte[buffer.remaining()];
+            buffer.get(resultBuffer, 0, buffer.remaining());
+            //System.arraycopy(readBuffer, payloadOffset, resultBuffer, 0, payloadLength);
             processMessage(mi, resultBuffer, 0, resultBuffer.length);
         }
         //System.err.print(HexDump.prettyPrintHex(buffer, payloadOffset, Math.min(16, payloadLength)));
