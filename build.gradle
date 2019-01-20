@@ -44,7 +44,7 @@ task player(type: Zip) {
 
 task release(type: Zip) {
     from tasks.jar.outputs.files
-    from tasks.player.outputs.files.singleFile
+    from tasks.player.outputs.files
     from 'LICENSE.txt'
     from 'README.md'
     archiveName project.name + '-' + project.version + '-dist.zip'
