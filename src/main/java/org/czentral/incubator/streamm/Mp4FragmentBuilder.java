@@ -66,7 +66,8 @@ public class Mp4FragmentBuilder {
     private int dataLength = 0;
     
     public Mp4FragmentBuilder(int sequenceNumber, long initialTime) {
-        
+        //System.err.printf("Mp4FragmentBuilder.new%n");
+
         this.sequenceNumber = sequenceNumber;
         this.initialTime = initialTime;
         
@@ -96,6 +97,7 @@ public class Mp4FragmentBuilder {
     }
         
     public void addFrame(int trackID, int timeOffset, TimeInstant trackTime, byte[] buffer, int offset, int length) {
+        //System.err.printf("Mp4FragmentBuilder.addFrame %d : %d%n", trackID, trackTime.getMillis());
         TrackInfo info = getTrackInfo(trackID, trackTime.getTicks());
         
         info.framingData.putInt(length);
