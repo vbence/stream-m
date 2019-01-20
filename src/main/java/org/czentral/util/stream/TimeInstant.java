@@ -37,4 +37,8 @@ public class TimeInstant {
     public long getMillis() {
         return Math.round(1000 * (double)ticks / ticksPerSecond);
     }
+
+    public TimeInstant transposed(long ticksDelta) {
+        return new TimeInstant(ticksPerSecond, ticks + ticksDelta);
+    }
 }
