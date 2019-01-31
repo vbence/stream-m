@@ -15,5 +15,7 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 
-script:
-  - ./gradlew check --stacktrace
+jobs:
+  include:
+    - script: ./gradlew check --stacktrace
+    - script: ./gradlew release
