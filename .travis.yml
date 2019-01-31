@@ -27,6 +27,6 @@ jobs:
         skip_cleanup: true
         draft: true
         file_glob: true
-        file: build/*.zip
+        file: "build/stream-m-1.0-SNAPSHOT-dist.zip"
         on:
           branch: release-test
