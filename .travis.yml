@@ -19,3 +19,14 @@ jobs:
   include:
     - script: ./gradlew check --stacktrace
     - script: ./gradlew release
+    - stage: GitHub Release
+      script: skip
+      deploy:
+        provider: releases
+        api_key: "$GITHUB_OAUTH_TOKEN"
+        skip_cleanup: true
+        draft: true
+        file_glob: true
+        file: build/*-dist.zip
+        on:
+          branch: release-test
