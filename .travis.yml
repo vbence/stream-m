@@ -27,6 +27,6 @@ jobs:
         skip_cleanup: true
         draft: true
         file_glob: true
-        file: build/*-dist.zip
+        file: build/*.zip
         on:
           branch: release-test
