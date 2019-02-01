@@ -2,7 +2,6 @@ _deploy: &_deploy
   provider: releases
   api_key: "$GITHUB_OAUTH_TOKEN"
   skip_cleanup: true
-  draft: true
   file_glob: true
   file: build/*-dist.zip
   on: &_deploy_on
@@ -29,6 +28,18 @@ cache:
 jobs:
   include:
     - script: ./gradlew check --stacktrace
+    - stage: GitHub Release TEST
+      script: ./gradlew release
+      before_deploy:
+        - export PROJECT_VERSION=$(gradle -q printVersion)
+      deploy:
+        - <<: *_deploy
+          prerelease: true
+          draft: true
+          name: "Preview release ${PROJECT_VERSION}"
+          on:
+            <<: *_deploy_on
+            branch: release-test
     - stage: GitHub Release
       script: ./gradlew release
       before_deploy:
@@ -36,7 +47,7 @@ jobs:
       deploy:
         - <<: *_deploy
           prerelease: true
-          name: "Preview of ${PROJECT_VERSION}"
+          name: "Preview release ${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
-            branch: release-test
+            condition: $TRAVIS_TAG=~/^preview-$/
