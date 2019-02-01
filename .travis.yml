@@ -28,7 +28,7 @@ cache:
 jobs:
   include:
     - script: ./gradlew check --stacktrace
-    - stage: GitHub Release TEST
+    - stage: GitHub Release
       script: ./gradlew release
       before_deploy:
         - export PROJECT_VERSION=$(gradle -q printVersion)
@@ -40,11 +40,6 @@ jobs:
           on:
             <<: *_deploy_on
             branch: release-test
-    - stage: GitHub Custom Preview Release
-      script: ./gradlew release
-      before_deploy:
-        - export PROJECT_VERSION=$(gradle -q printVersion)
-      deploy:
         - <<: *_deploy
           prerelease: true
           name: "Preview release ${PROJECT_VERSION}"
@@ -52,11 +47,6 @@ jobs:
             <<: *_deploy_on
             all_branches: true
             condition: $TRAVIS_TAG=~/^preview[/-]/
-    - stage: GitHub Preview Release
-      script: ./gradlew release
-      before_deploy:
-        - export PROJECT_VERSION=$(gradle -q printVersion)
-      deploy:
         - <<: *_deploy
           prerelease: true
           name: "${PROJECT_VERSION}"
@@ -64,11 +54,6 @@ jobs:
             <<: *_deploy_on
             branch: master
             condition: PROJECT_VERSION =~ /SNAPSHOT/
-    - stage: GitHub Stable Release
-      script: ./gradlew release
-      before_deploy:
-        - export PROJECT_VERSION=$(gradle -q printVersion)
-      deploy:
         - <<: *_deploy
           name: "${PROJECT_VERSION}"
           on:
