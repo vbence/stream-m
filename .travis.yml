@@ -34,7 +34,7 @@ jobs:
       before_deploy:
         - export PROJECT_VERSION=$(gradle -q printVersion)
       deploy:
-        <<: *_deploy
+        - <<: *_deploy
           on:
             <<: *_deploy_on
             branch: release-test
