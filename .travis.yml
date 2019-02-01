@@ -35,6 +35,8 @@ jobs:
         - export PROJECT_VERSION=$(gradle -q printVersion)
       deploy:
         - <<: *_deploy
+          prerelease: true
+          name: "Preview of ${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
             branch: release-test
