@@ -47,7 +47,7 @@ jobs:
           on:
             <<: *_deploy_on
             all_branches: true
-            condition: $TRAVIS_TAG =~ /^preview[/-]/
+            condition: $TRAVIS_TAG =~ /^preview[-]/
         - <<: *_deploy
           prerelease: true
           name: "${PROJECT_VERSION}"
