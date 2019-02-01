@@ -36,7 +36,7 @@ jobs:
         - <<: *_deploy
           prerelease: true
           draft: true
-          name: "Preview release ${PROJECT_VERSION}"
+          name: "Preview test release ${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
             branch: release-test
@@ -50,4 +50,5 @@ jobs:
           name: "Preview release ${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
+            all_branches: true
             condition: $TRAVIS_TAG=~/^preview-$/
