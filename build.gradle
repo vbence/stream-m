@@ -50,3 +50,9 @@ task release(type: Zip) {
     archiveName project.name + '-' + project.version + '-dist.zip'
     destinationDir(file('build'))
 }
+
+task printVersion {
+    doLast {
+        println project.version
+    }
+}

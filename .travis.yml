@@ -1,8 +1,19 @@
+_deploy: &_deploy
+  provider: releases
+  api_key: "$GITHUB_OAUTH_TOKEN"
+  skip_cleanup: true
+  draft: true
+  file_glob: true
+  file: build/*-dist.zip
+  on: &_deploy_on
+    jdk: oraclejdk8
+
 language: java
 install: true
 
 jdk:
   - oraclejdk8
+  - oraclejdk11
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -20,12 +31,10 @@ jobs:
     - script: ./gradlew check --stacktrace
     - stage: GitHub Release
       script: ./gradlew release
+      before_deploy:
+        - export PROJECT_VERSION=$(gradle -q printVersion)
       deploy:
-        provider: releases
-        api_key: "$GITHUB_OAUTH_TOKEN"
-        skip_cleanup: true
-        draft: true
-        file_glob: true
-        file: build/*-dist.zip
-        on:
-          branch: release-test
+        <<: *_deploy
+          on:
+            <<: *_deploy_on
+            branch: release-test
