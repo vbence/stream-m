@@ -10,10 +10,7 @@ _deploy: &_deploy
 
 language: java
 install: true
-
-jdk:
-  - oraclejdk8
-  - oraclejdk11
+script: true
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -26,12 +23,15 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 
-script: skip
-
 jobs:
   include:
     - script: ./gradlew check --stacktrace
+      jdk:
+        - oraclejdk8
+        - oraclejdk11
     - stage: GitHub Release
+      jdk:
+        - oraclejdk8
       script: ./gradlew release
       before_deploy:
         - export PROJECT_VERSION=$(gradle -q printVersion)
