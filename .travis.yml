@@ -60,4 +60,4 @@ jobs:
           on:
             <<: *_deploy_on
             branch: master
-            condition: "$PROJECT_VERSION !~ /SNAPSHOT/"
+            condition: "! $PROJECT_VERSION =~ /SNAPSHOT/"
