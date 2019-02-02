@@ -26,6 +26,8 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 
+script: skip
+
 jobs:
   include:
     - script: ./gradlew check --stacktrace
