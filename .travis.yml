@@ -26,12 +26,11 @@ cache:
 jobs:
   include:
     - script: ./gradlew check --stacktrace
-      jdk:
-        - oraclejdk8
-        - oraclejdk11
+      jdk: oraclejdk8
+    - script: ./gradlew check --stacktrace
+      jdk: oraclejdk11
     - stage: GitHub Release
-      jdk:
-        - oraclejdk8
+      jdk: oraclejdk8
       script: ./gradlew release
       before_deploy:
         - export PROJECT_VERSION=$(gradle -q printVersion)
