@@ -26,35 +26,38 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 
-script:
-  - ./gradlew check --stacktrace
-  - ./gradlew release
+script: skip
 
-before_deploy:
-  - export PROJECT_VERSION=$(gradle -q printVersion)
-deploy:
-  - <<: *_deploy
-    prerelease: true
-    draft: true
-    name: "Test release ${PROJECT_VERSION}"
-    on:
-      <<: *_deploy_on
-      branch: release-test
-  - <<: *_deploy
-    prerelease: true
-    name: "Preview release ${PROJECT_VERSION}"
-    on:
-      <<: *_deploy_on
-      all_branches: true
-      condition: $TRAVIS_TAG =~ /^preview[-].*$/
-  - <<: *_deploy
-    prerelease: true
-    on:
-      <<: *_deploy_on
-      branch: master
-      condition: $PROJECT_VERSION =~ /^.*SNAPSHOT$/
-  - <<: *_deploy
-    on:
-      <<: *_deploy_on
-      branch: master
-      condition: ! $PROJECT_VERSION =~ /^.*SNAPSHOT$/
+jobs:
+  include:
+    - script: ./gradlew check --stacktrace
+    - stage: GitHub Release
+      script: ./gradlew release
+      before_deploy:
+        - export PROJECT_VERSION=$(gradle -q printVersion)
+      deploy:
+        - <<: *_deploy
+          prerelease: true
+          draft: true
+          name: "Test release ${PROJECT_VERSION}"
+          on:
+            <<: *_deploy_on
+            branch: release-test
+        - <<: *_deploy
+          prerelease: true
+          name: "Preview release ${PROJECT_VERSION}"
+          on:
+            <<: *_deploy_on
+            all_branches: true
+            condition: $TRAVIS_TAG =~ /^preview[-].*$/
+        - <<: *_deploy
+          prerelease: true
+          on:
+            <<: *_deploy_on
+            branch: master
+            condition: $PROJECT_VERSION =~ /^.*SNAPSHOT$/
+        - <<: *_deploy
+          on:
+            <<: *_deploy_on
+            branch: master
+            condition: ! $PROJECT_VERSION =~ /^.*SNAPSHOT$/
