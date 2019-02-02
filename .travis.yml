@@ -5,7 +5,6 @@ _deploy: &_deploy
   file_glob: true
   file: build/*-dist.zip
   on: &_deploy_on
-    tags: true
     jdk: oraclejdk8
 
 language: java
@@ -37,7 +36,7 @@ jobs:
         - <<: *_deploy
           prerelease: true
           draft: true
-          name: "Preview test release ${PROJECT_VERSION}"
+          name: "Test release ${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
             branch: release-test
@@ -47,17 +46,17 @@ jobs:
           on:
             <<: *_deploy_on
             all_branches: true
-            condition: "$TRAVIS_TAG =~ /^preview[-]/"
+            condition: $TRAVIS_TAG =~ /^preview[-]/
         - <<: *_deploy
           prerelease: true
           name: "${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
             branch: master
-            condition: "$PROJECT_VERSION =~ /SNAPSHOT/"
+            condition: $PROJECT_VERSION =~ /SNAPSHOT/
         - <<: *_deploy
           name: "${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
             branch: master
-            condition: "! $PROJECT_VERSION =~ /SNAPSHOT/"
+            condition: ! $PROJECT_VERSION =~ /SNAPSHOT/
