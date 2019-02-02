@@ -1,4 +1,5 @@
 _deploy: &_deploy
+  name: "${PROJECT_VERSION}"
   provider: releases
   api_key: "$GITHUB_OAUTH_TOKEN"
   skip_cleanup: true
@@ -49,13 +50,11 @@ jobs:
             condition: $TRAVIS_TAG =~ /^preview[-].*$/
         - <<: *_deploy
           prerelease: true
-          name: "${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
             branch: master
             condition: $PROJECT_VERSION =~ /^.*SNAPSHOT$/
         - <<: *_deploy
-          name: "${PROJECT_VERSION}"
           on:
             <<: *_deploy_on
             branch: master
