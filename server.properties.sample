@@ -9,6 +9,10 @@
 # listening port for the http server
 http.port = 8080
 
+# http.crossorgin
+# allows access from third party hosts, sets Access-Control-Allow-Origin header
+# http.crossorgin = *
+
 # rtmp.port
 # listening port for the rtmp server
 rtmp.port = 8081

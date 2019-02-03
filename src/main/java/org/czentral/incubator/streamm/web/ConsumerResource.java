@@ -68,7 +68,13 @@ public class ConsumerResource implements HTTPResource {
         if (stream == null || !stream.isRunning()) {
             throw new HTTPException(503, "Stream Not Running");
         }
-        
+
+        String crossOriginProp = props.getProperty("http.crossorgin", null);
+        if (crossOriginProp != null) {
+            response.setParameter("Access-Control-Allow-Origin", crossOriginProp);
+            response.setParameter("Access-Control-Expose-Headers", STR_X_SEQUENCE);
+        }
+
         // setting rsponse content-type
         response.setParameter(STR_CONTENT_TYPE, stream.getMimeType());
         
