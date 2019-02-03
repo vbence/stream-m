@@ -48,15 +48,15 @@ jobs:
           on:
             <<: *_deploy_on
             all_branches: true
-            condition: "$TRAVIS_TAG" =~ /^preview[-/].*$/
+            condition: $TRAVIS_TAG =~ /^preview[-/].*$/
         - <<: *_deploy
           prerelease: true
           on:
             <<: *_deploy_on
             branch: master
-            condition: "$PROJECT_VERSION" =~ ^.*SNAPSHOT$
+            condition: $PROJECT_VERSION =~ ^.*SNAPSHOT$
         - <<: *_deploy
           on:
             <<: *_deploy_on
             branch: master
-            condition: ! "$PROJECT_VERSION" =~ ^.*SNAPSHOT$
+            condition: ! $PROJECT_VERSION =~ ^.*SNAPSHOT$
