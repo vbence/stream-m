@@ -31,9 +31,9 @@ jobs:
       jdk: oraclejdk11
     - stage: GitHub Release
       jdk: oraclejdk8
-      script: ./gradlew release
-      before_deploy:
-        - export PROJECT_VERSION=$(gradle -q printVersion)
+      script:
+        - ./gradlew release
+        - export PROJECT_VERSION=$(./gradlew -q printVersion)
       deploy:
         - <<: *_deploy
           prerelease: true
@@ -59,4 +59,4 @@ jobs:
           on:
             <<: *_deploy_on
             branch: master
-            condition: ! $PROJECT_VERSION =~ /^.*SNAPSHOT$/
+            condition: ! ( $PROJECT_VERSION =~ /^.*SNAPSHOT$/ )
