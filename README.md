@@ -105,17 +105,9 @@ The hard maximum for a fragments is 2048 kBytes. This is twice the size needed t
 
 ## PUBLISHING WEBM
 
-### On Windows Systems
+These are minimal examples for mainly debugging purposes. They use 16 frames per second. If your wecam can not produce 16 frames (due to low lighting conditions for example) you will experience all sort of weirdness in the player. If you are using these commands please check this before any other things.
 
-In theory several open source tools can be used for this. Practically you will need two of them if you want to stream from your webcam in windows.
-
-**VLC** can access your recording hardware and encode WebM, but it only saves it to a file. (None of VLC-s other output modules currently support it). Neither can VLC send a stream out with POST method.
-
-**FFmpeg** is great on multiplexing and output, but the windows version can not access *DirectShow*, which your sound card uses to give access to the microphone data.
-
-So we are going to usee them both together: VLC will access the audio, compress it to a temporary format (mp3). FFmpeg will connect to VLC to get the audio and VFW for the video, re-encodes audio to Ogg-Vorbis and video to VP8, multiplex them into a WebM container and POSTs it to the given URL.
-
-*VLC* will listen to the local port: 8089 for *FFmpeg* to connect, so firewalls should be aware.
+Adding a second instance if `-r 16` before `-g 52` can in some cases remedy this issue it can also help hide the problem so I would recommend against it. 
 
 > **Assumptions:**
 > 
@@ -123,15 +115,14 @@ So we are going to usee them both together: VLC will access the audio, compress 
 > - stream name: `first`
 > - stream password: `secret`
 
-    vlc -I dummy dshow:// --sout \
-    "#transcode{vcodec=none,acodec=mp3,ab=128,channels=2,samplerate=44100} :http{mux=ts,dst=127.0.0.1:8089/}" \
-    --dshow-vdev=none --no-sout-rtp-sap --no-sout-standard-sap --sout-keep
+### On Windows Systems
 
-<!-- -->
+An FFMpeg example on Windows:
 
-    ffmpeg -f vfwcap -r 16 -i 0 -i http://localhost:8089/ -g 52 \
-    -acodec libvorbis -ab 64k -vcodec libvpx -vb 448k \
-    -f matroska http://example.com:8080/publish/first?password=secret
+    ffmpeg -f dshow -s 320x240 -r 16 -i ^
+    video="USB2.0 PC CAMERA":audio="Microphone (High Definition Audio Device)" ^
+    -g 52 -acodec libvorbis -ab 64k -vcodec libvpx -vb 448k ^
+    -f webm http://192.168.92.129:8080/publish/first?password=secret
 
 ### On Linux Systems
 
@@ -146,7 +137,24 @@ So we are going to usee them both together: VLC will access the audio, compress 
 
 ### On Windows Systems
 
-For the peculiarities of FFmpeg on Windows please see the section above (about WebM). I recommend using OBS or similar product over FFmpeg.
+Even though I recommend using OBS or similar product over FFmpeg, it is a good place to start debugging if something does not go accordint to plan. Your devices will have a qunique Windows name, you can list them with the following command.
+
+    c:\> ffmpeg -list_devices true -f dshow -i dummy
+    [dshow @ 0000014a81b3a1c0] DirectShow video devices (some may be both video and audio devices)
+    [dshow @ 0000014a81b3a1c0]  "USB2.0 PC CAMERA"
+    [dshow @ 0000014a81b3a1c0]     Alternative name "@device_pnp_\\?\usb#vid_1908&pid_2311&mi_00#7&281f4d21&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global"
+    [dshow @ 0000014a81b3a1c0] DirectShow audio devices
+    [dshow @ 0000014a81b3a1c0]  "Microphone (High Definition Audio Device)"
+    [dshow @ 0000014a81b3a1c0]     Alternative name "@device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{2D2C3430-0307-4BDD-A80A-E394F1A56900}"
+    
+In my case the webcam is called `USB2.0 PC CAMERA` and the microphone `Microphone (High Definition Audio Device)`. I can broadcast using these devices with the following command.
+
+    ffmpeg -f dshow -s 320x240 -r 16 ^
+    -i video="USB2.0 PC CAMERA":audio="Microphone (High Definition Audio Device)" ^
+    -g 52 -strict experimental -acodec aac -ab 56k -vcodec libx264 -vb 452k ^
+    -profile:v high -pix_fmt yuv420p -level 40 -r 16 ^
+    -f flv "rtmp://example.com:8081/publish/first?secret"
+    
 
 ### On Linux Systems
 
