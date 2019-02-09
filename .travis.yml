@@ -3,6 +3,7 @@ _deploy: &_deploy
   provider: releases
   api_key: "$GITHUB_OAUTH_TOKEN"
   skip_cleanup: true
+  overwrite: true
   file_glob: true
   file: build/*-dist.zip
   on: &_deploy_on
