@@ -51,6 +51,12 @@ task release(type: Zip) {
     destinationDir(file('build'))
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
 task printVersion {
     doLast {
         println project.version
