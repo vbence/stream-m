@@ -7,7 +7,7 @@ _deploy: &_deploy
   file_glob: true
   file: build/*-dist.zip
   on: &_deploy_on
-    jdk: oraclejdk8
+    jdk: oraclejdk9
 
 language: java
 install: true
@@ -27,11 +27,11 @@ cache:
 jobs:
   include:
     - script: ./gradlew check --stacktrace
-      jdk: oraclejdk8
+      jdk: oraclejdk9
     - script: ./gradlew check --stacktrace
-      jdk: oraclejdk11
+      jdk: oraclejdk14
     - stage: GitHub Release
-      jdk: oraclejdk8
+      jdk: oraclejdk9
       script:
         - ./gradlew release
         - export PROJECT_VERSION=$(./gradlew -q printVersion)
