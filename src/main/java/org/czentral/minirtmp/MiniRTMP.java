@@ -80,11 +80,11 @@ public class MiniRTMP implements Runnable {
             }
             
             ResourceLimit limit = new ResourceLimit();
-            limit.chunkStreamCount = 8;
-            limit.assemblyBufferCount = 2;
-            limit.assemblyBufferSize = 4096;
+            limit.chunkStreamCount = 32;
+            limit.assemblyBufferCount = 8;
+            limit.assemblyBufferSize = 16384;
             
-            Feeder feeder = new Feeder(new Buffer(65536), is);
+            Feeder feeder = new Feeder(new Buffer(262144), is);
             
             HandshakeProcessor handshake = new HandshakeProcessor(os);
             feeder.feedTo(handshake);
