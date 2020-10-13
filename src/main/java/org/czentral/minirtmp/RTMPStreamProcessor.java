@@ -69,7 +69,7 @@ class RTMPStreamProcessor implements Processor {
     }
 
     @Override
-    public int process(byte[] buffer, int offset, int length) {
+    public int process(byte[] buffer, int offset, int length) throws RestartStreamerException {
         int bytesProcessed = 0;
         do {
             int packetBytes = processPacket(buffer, offset + bytesProcessed, length - bytesProcessed);
@@ -82,7 +82,7 @@ class RTMPStreamProcessor implements Processor {
     }
 
 
-    public int processPacket(byte[] buffer, int offset, int length) {
+    public int processPacket(byte[] buffer, int offset, int length) throws RestartStreamerException {
         if (length < 1) {
             return 0;
         }
@@ -101,7 +101,7 @@ class RTMPStreamProcessor implements Processor {
                 //System.out.println(op.get());
             } catch (RtmpException e) {
                 e.printStackTrace();
-                return 0;
+                throw new RestartStreamerException(e.getMessage());
             }
         }
         //if (bb.remaining() < lastPacket.payloadLegth) {

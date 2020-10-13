@@ -253,9 +253,9 @@ class PublisherAppInstance implements ApplicationInstance {
         }
         
         // raise limit after successful authentication
-        context.getLimit().assemblyBufferSize = 2 * 1024 * 1024;
-        context.getLimit().assemblyBufferCount = 16;
-        context.getLimit().chunkStreamCount = 32;
+        context.getLimit().assemblyBufferSize = 50 * 1024 * 1024;
+        context.getLimit().assemblyBufferCount = 128;
+        context.getLimit().chunkStreamCount = 256;
         
         streamID = clientStreamID;
         

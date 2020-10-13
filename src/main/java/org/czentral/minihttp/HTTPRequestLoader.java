@@ -19,6 +19,8 @@ package org.czentral.minihttp;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+
+import org.czentral.minirtmp.RestartStreamerException;
 import org.czentral.util.stream.*;
 
 /**
@@ -236,7 +238,11 @@ class HTTPRequestLoader implements HTTPRequest {
         if (state >= STATE_REQUEST_LINE_LOADED)
             return;
 
-        feeder.feedTo(new RequestLineLoader());
+        try {
+            feeder.feedTo(new RequestLineLoader());
+        } catch (RestartStreamerException e) {
+            e.printStackTrace();
+        }
         state = STATE_REQUEST_LINE_LOADED;
     }
     
@@ -247,7 +253,11 @@ class HTTPRequestLoader implements HTTPRequest {
         loadRequestLine();
         
         RequestHeaderLoader loader = new RequestHeaderLoader();
-        feeder.feedTo(loader);
+        try {
+            feeder.feedTo(loader);
+        } catch (RestartStreamerException e) {
+            e.printStackTrace();
+        }
         requestHeaders = loader.getCompactMap();
         
         state = STATE_REQUEST_HEADERS_LOADED;

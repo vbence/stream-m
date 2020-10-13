@@ -70,10 +70,10 @@ public class MiniRTMP implements Runnable {
         }
         
         public void run() {
-            InputStream is;
+            BufferedInputStream is;
             OutputStream os;
             try {
-                is = sock.getInputStream();
+                is = new BufferedInputStream(sock.getInputStream());
                 os = sock.getOutputStream();
             } catch (IOException e) {
                 throw new RuntimeException("Error opening streams");
@@ -87,12 +87,33 @@ public class MiniRTMP implements Runnable {
             Feeder feeder = new Feeder(new Buffer(262144), is);
             
             HandshakeProcessor handshake = new HandshakeProcessor(os);
-            feeder.feedTo(handshake);
-            
+            try {
+                feeder.feedTo(handshake);
+            } catch (RestartStreamerException e) {
+                e.printStackTrace();
+            }
+
             String clientId = sock.getRemoteSocketAddress().toString();
+            try {
+                sock.setReceiveBufferSize(1024*1024);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
             ApplicationContext context = new ApplicationContext(os, limit, factory, clientId);
-            feeder.feedTo(new RTMPStreamProcessor(limit, context));
-            
+            try {
+                feeder.feedTo(new RTMPStreamProcessor(limit, context));
+            } catch (RestartStreamerException e) {
+                e.printStackTrace();
+                System.out.println("restart");
+                System.out.println(e.getMessage());
+                feeder = new Feeder(new Buffer(262144), is);
+                try {
+                    feeder.feedTo(new RTMPStreamProcessor(limit, context));
+                } catch (RestartStreamerException restartStreamerException) {
+                    restartStreamerException.printStackTrace();
+                }
+            }
+
             try {
                 is.close();
                 os.close();

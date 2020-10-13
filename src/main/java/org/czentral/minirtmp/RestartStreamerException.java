@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Bence Varga
+ * Copyright 2019 Bence Varga
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -15,37 +15,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+package org.czentral.minirtmp;
 
-package org.czentral.util.stream;
+public class RestartStreamerException extends Exception {
+    public RestartStreamerException() {
+        super();
+    }
 
-import org.czentral.minirtmp.RestartStreamerException;
-
-/**
- *
- * @author bence
- */
-public interface Processor {
-
-    /**
-     * Checks if this processor has finished its job.
-     *
-     * @return <code>true</code> if this processor extracted all the data.
-     */
-    boolean finished();
-
-    /**
-     * Process binary data from this buffer.
-     *
-     * @param buffer The buffer of data.
-     * @param offset The offset of the first byte which needs to be processed within the buffer.
-     * @param length The number of data bytes need to be processed.
-     * @return Number of bytes successfully processed.
-     */
-    int process(byte[] buffer, int offset, int length) throws RestartStreamerException;
-    
+    public RestartStreamerException(String message) {
+        super(message);
+    }
 }

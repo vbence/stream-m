@@ -18,6 +18,8 @@
 package org.czentral.util.stream;
 
 
+import org.czentral.minirtmp.RestartStreamerException;
+
 import java.io.*;
 
 /**
@@ -44,7 +46,7 @@ public class Feeder {
     /**
      * Feeds the input to a <code>Processor</code> until it finishes its work.
      */
-    public void feedTo(Processor processor) {
+    public void feedTo(Processor processor) throws RestartStreamerException {
         byte[] data = buffer.getData();
         
         do {

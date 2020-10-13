@@ -18,6 +18,8 @@
 package org.czentral.incubator.streamm;
 
 import java.io.*;
+
+import org.czentral.minirtmp.RestartStreamerException;
 import org.czentral.util.stream.Buffer;
 import org.czentral.util.stream.Feeder;
 
@@ -42,11 +44,19 @@ public class StreamInput {
         Feeder feeder = new Feeder(buffer, input);
         
         HeaderDetectionState hds = new HeaderDetectionState(this, stream);
-        feeder.feedTo(hds);
+        try {
+            feeder.feedTo(hds);
+        } catch (RestartStreamerException e) {
+            e.printStackTrace();
+        }
 
         StreamingState ss = new StreamingState(this, stream, hds.getVideoTrackNumber());
-        feeder.feedTo(ss);
-        
+        try {
+            feeder.feedTo(ss);
+        } catch (RestartStreamerException e) {
+            e.printStackTrace();
+        }
+
         // notification about ending the input process
         stream.postEvent(new ServerEvent(this, stream, ServerEvent.INPUT_STOP));
     }
