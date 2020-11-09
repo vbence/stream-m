@@ -98,8 +98,6 @@ public class MiniRTMP implements Runnable {
             try {
                 feeder.feedTo(new RTMPStreamProcessor(limit, context));
             } catch (RestartStreamerException e) {
-                e.printStackTrace();
-                System.out.println("restart");
                 System.out.println(e.getMessage());
                 feeder = new Feeder(new Buffer(262144), is);
                 try {
