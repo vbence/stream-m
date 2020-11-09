@@ -74,7 +74,7 @@ public class MiniRTMP implements Runnable {
             OutputStream os;
             try {
                 is = new BufferedInputStream(sock.getInputStream());
-                os = sock.getOutputStream();
+                os = new BufferedOutputStream(sock.getOutputStream());
             } catch (IOException e) {
                 throw new RuntimeException("Error opening streams");
             }
@@ -85,7 +85,7 @@ public class MiniRTMP implements Runnable {
             limit.assemblyBufferSize = 4096;
             
             Feeder feeder = new Feeder(new Buffer(262144), is);
-            
+
             HandshakeProcessor handshake = new HandshakeProcessor(os);
             try {
                 feeder.feedTo(handshake);
@@ -94,11 +94,6 @@ public class MiniRTMP implements Runnable {
             }
 
             String clientId = sock.getRemoteSocketAddress().toString();
-            try {
-                sock.setReceiveBufferSize(1024*1024);
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
             ApplicationContext context = new ApplicationContext(os, limit, factory, clientId);
             try {
                 feeder.feedTo(new RTMPStreamProcessor(limit, context));

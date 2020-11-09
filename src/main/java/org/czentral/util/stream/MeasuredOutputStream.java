@@ -35,7 +35,7 @@ import org.czentral.incubator.streamm.Stream;
  */
 public class MeasuredOutputStream extends OutputStream {
     
-    private final int DEFAULT_PACKET_SIZE = 64 * 1024;
+    private final int DEFAULT_PACKET_SIZE = 1024 * 1024;
 
     protected OutputStream base;
     protected EventSource source;

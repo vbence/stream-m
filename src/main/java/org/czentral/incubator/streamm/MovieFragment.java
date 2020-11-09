@@ -27,7 +27,7 @@ public interface MovieFragment {
 
     public static int LIMIT_FRAME_MINIMUM = 100 * 1024;
     
-    public static int LIMIT_FRAME_MAXIMUM = 2048 * 1024 + 64 * 1024;
+    public static int LIMIT_FRAME_MAXIMUM = 10 * 2048 * 1024 + 64 * 1024;
     
     public Buffer[] getBuffers();
 

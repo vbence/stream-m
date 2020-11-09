@@ -80,8 +80,8 @@ public class MiniHTTP extends Thread {
             InputStream is;
             OutputStream os;
             try {
-                is = sock.getInputStream();
-                os = sock.getOutputStream();
+                is = new BufferedInputStream(sock.getInputStream());
+                os = new BufferedOutputStream(sock.getOutputStream());
             } catch (IOException e) {
                 throw new RuntimeException("Error opening streams");
             }
