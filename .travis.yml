@@ -10,12 +10,14 @@ _deploy: &_deploy
     jdk: oraclejdk9
 
 language: java
-install: true
-script: true
-
 os: linux
 group: edge
 arch: arm64-graviton2
+dist: xenial
+virt: lxd
+
+install: true
+script: true
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
