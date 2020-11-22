@@ -10,6 +10,12 @@ _deploy: &_deploy
     jdk: oraclejdk9
 
 language: java
+os: linux
+group: edge
+arch: arm64-graviton2
+dist: xenial
+virt: lxd
+
 install: true
 script: true
 
