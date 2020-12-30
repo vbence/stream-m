@@ -42,7 +42,11 @@ public class RtmpReader {
         RtmpPacket lastPacket = lastPackets.getOrDefault(p.sid, null);
 
         boolean newMessage = lastPacket == null ||
-                lastPacket.offset + lastPacket.payloadLegth == lastPacket.messageSize;
+                lastPacket.messageOffset + chunkSize >= lastPacket.messageSize;
+
+        if (!newMessage) {
+            p.messageOffset = lastPacket.messageOffset + chunkSize;
+        }
 
         if (lastPacket != null) {
             p.absoluteTimestamp = lastPacket.absoluteTimestamp;
@@ -83,12 +87,6 @@ public class RtmpReader {
         }
 
         p.headerLength = buffer.position() - originalOffset;
-        if (!newMessage) {
-            p.offset = lastPacket.offset + lastPacket.payloadLegth;
-            p.payloadLegth = Math.min(chunkSize, lastPacket.messageSize - p.offset);
-        } else {
-            p.payloadLegth = Math.min(chunkSize, p.messageSize);
-        }
 
         lastPackets.put(p.sid, p);
 
@@ -97,5 +95,9 @@ public class RtmpReader {
 
     public void setChunkSize(long chunkSize) {
         this.chunkSize = chunkSize;
+    }
+
+    public long getChunkSize() {
+        return chunkSize;
     }
 }

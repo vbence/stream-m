@@ -39,11 +39,14 @@ public class HexDump {
         StringBuilder sb = new StringBuilder(4096);
         int offset = startOffset;
         while (offset < startOffset + maxLength) {
+            sb.append(String.format("%08X:  ", offset));
             int segmentLength = Math.min(LINE_LENGTH, startOffset + maxLength - offset);
             for (int i = 0; i < segmentLength; i++) {
+                if (i > 0) {
+                    sb.append(i % 4 == 0 ? '-' : ' ');
+                }
                 sb.append(digits[(buffer[offset + i] >> 4) & 0x0f]);
                 sb.append(digits[(buffer[offset + i]) & 0x0f]);
-                sb.append(' ');
                 //String digit = new String("0" + Integer.toHexString(buffer[offset + i] & 0xff));
                 //s += " " + digit.substring(digit.length() - 2);
             }

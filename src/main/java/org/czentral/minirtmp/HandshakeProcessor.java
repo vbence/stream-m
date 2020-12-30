@@ -54,7 +54,7 @@ public class HandshakeProcessor implements Processor {
             return 0;
         }
 
-        //System.err.println(HexDump.prettyPrintHex(buffer, offset, length));
+        //System.err.println(HexDump.prettyPrintHex(buffer, messageOffset, length));
         
         if (stage == Stage.ClientBlock) {
             int processed = bytesNeeded;

@@ -131,7 +131,7 @@ public class ApplicationContext implements ChunkProcessor {
             }
 
             buffer.get(assemblyBuffer.array, mi.offset, buffer.remaining());
-            //System.arraycopy(readBuffer, payloadOffset, assemblyBuffer.array, mi.offset, payloadLength);
+            //System.arraycopy(readBuffer, payloadOffset, assemblyBuffer.array, mi.messageOffset, payloadLength);
 
             boolean assembled = (mi.offset + payloadLength >= mi.length);
             if (assembled) {
