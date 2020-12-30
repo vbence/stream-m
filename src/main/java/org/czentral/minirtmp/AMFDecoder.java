@@ -91,7 +91,7 @@ class AMFDecoder {
                 throw new RuntimeException(e);
             }
             offset += 2 + length;
-            //System.err.println("k: " + key + ", o: " + offset);
+            //System.err.println("k: " + key + ", o: " + messageOffset);
             if (length == 0) {
                 if (buffer[offset] != 0x09) {
                     throw new IllegalArgumentException("Object-end type ID (0x09) expected.");

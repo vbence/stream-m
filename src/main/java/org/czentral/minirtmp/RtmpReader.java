@@ -17,6 +17,8 @@
 
 package org.czentral.minirtmp;
 
+import org.czentral.incubator.streamm.HexDump;
+
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +28,10 @@ public class RtmpReader {
     Map<Integer, RtmpPacket> lastPackets = new HashMap<>();
 
     private long chunkSize;
+
+    private byte[] lastBytes = new byte[16 * 1024];
+    private ByteBuffer lastBuffer = ByteBuffer.wrap(lastBytes);
+    private RtmpPacket lastParsedPacket = null;
 
     public RtmpReader(long chunkSize) {
         this.chunkSize = chunkSize;
@@ -42,7 +48,7 @@ public class RtmpReader {
         RtmpPacket lastPacket = lastPackets.getOrDefault(p.sid, null);
 
         boolean newMessage = lastPacket == null ||
-                lastPacket.offset + lastPacket.payloadLegth == lastPacket.messageSize;
+                lastPacket.messageOffset == lastPacket.messageSize;
 
         if (lastPacket != null) {
             p.absoluteTimestamp = lastPacket.absoluteTimestamp;
@@ -62,6 +68,15 @@ public class RtmpReader {
 
         } else {
             if (p.chunkType > 0) {
+                //System.err.println("Last good packet --------------------------");
+                //System.err.println(lastParsedPacket);
+                //System.err.print(HexDump.prettyPrintHex(lastBytes, 0, lastBuffer.limit()));
+                byte[] b = new byte[1024];
+                ByteBuffer temp = buffer.duplicate();
+                temp.position(originalOffset);
+                int length = Math.min(b.length, temp.remaining());
+                temp.get(b, 0, length);
+                System.err.print(HexDump.prettyPrintHex(b, 0, length));
                 throw new RtmpException(String.format("Missing previous chunk (chunkId: %d, type: %d)", p.sid, p.chunkType));
             }
         }
@@ -82,20 +97,27 @@ public class RtmpReader {
             }
         }
 
-        p.headerLength = buffer.position() - originalOffset;
         if (!newMessage) {
-            p.offset = lastPacket.offset + lastPacket.payloadLegth;
-            p.payloadLegth = Math.min(chunkSize, lastPacket.messageSize - p.offset);
-        } else {
-            p.payloadLegth = Math.min(chunkSize, p.messageSize);
+            p.messageOffset = lastPacket.messageOffset;
         }
+        p.headerLength = buffer.position() - originalOffset;
 
         lastPackets.put(p.sid, p);
+
+        ByteBuffer temp = buffer.duplicate();
+        temp.position(originalOffset);
+        lastBuffer.limit(Math.min(temp.limit()-temp.position(), lastBytes.length));
+        temp.get(lastBytes, 0, lastBuffer.limit());
+        lastParsedPacket = p;
 
         return Optional.of(p);
     }
 
     public void setChunkSize(long chunkSize) {
         this.chunkSize = chunkSize;
+    }
+
+    public long getChunkSize() {
+        return chunkSize;
     }
 }

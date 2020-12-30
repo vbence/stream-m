@@ -90,7 +90,7 @@ class RTMPStreamProcessor implements Processor {
         int processed = 0;
 
         ByteBuffer bb = ByteBuffer.wrap(buffer, offset, length);
-        if (lastPacket == null || lastPacket.offset >= lastPacket.payloadLegth) {
+        if (lastPacket == null || lastPacket.chunkOffset >= reader.getChunkSize() || lastPacket.messageOffset >= lastPacket.messageSize) {
             try {
                 Optional<RtmpPacket> op = reader.read(bb);
                 if (!op.isPresent()) {
@@ -101,7 +101,8 @@ class RTMPStreamProcessor implements Processor {
                 //System.out.println(op.get());
             } catch (RtmpException e) {
                 e.printStackTrace();
-                return 0;
+                throw new RuntimeException(e);
+                //return 0;
             }
         }
         //if (bb.remaining() < lastPacket.payloadLegth) {
@@ -115,17 +116,19 @@ class RTMPStreamProcessor implements Processor {
         // change chunk size command processed
         if (lastPacket.messageType == 0x01) {
             if (bb.remaining() < 4) {
-                return processed;
+                return 0;
             }
-            int proposedChunkSize = (bb.get() & 0xff) << 24 | (bb.get() & 0xff) << 16
-                    | (bb.get() & 0xff) << 8 | (bb.get() & 0xff);
+            ByteBuffer bbc = bb.duplicate();
+            int proposedChunkSize = (bbc.get() & 0xff) << 24 | (bbc.get() & 0xff) << 16
+                    | (bbc.get() & 0xff) << 8 | (bbc.get() & 0xff);
             int newChunkSize = Math.min(proposedChunkSize, 0xFFFFFF);
             reader.setChunkSize(newChunkSize);
         }
 
         //chunkProcessor.processChunk(lastMessage, buffer, readOffset, payloadLength);
         //MessageInfo messageInfo = buildInfo(p);
-        int byteCount = Math.min((int)lastPacket.payloadLegth, bb.remaining());
+        int chunkRemaining = (int)Math.min(lastPacket.messageSize-lastPacket.messageOffset, reader.getChunkSize() - lastPacket.chunkOffset);
+        int byteCount = Math.min(chunkRemaining, bb.remaining());
         if (byteCount > 0) {
             chunkProcessor.processChunk(buildInfo(lastPacket), bb.array(), bb.position(), byteCount);
 
@@ -144,7 +147,7 @@ class RTMPStreamProcessor implements Processor {
 
     private MessageInfo buildInfo(RtmpPacket p) {
         MessageInfo mi = new MessageInfo(p.sid, p.messageType, (int)p.messageSize);
-        mi.offset = (int)p.offset;
+        mi.offset = (int)p.messageOffset;
         mi.length = (int)p.messageSize;
         mi.calculatedTimestamp = p.absoluteTimestamp;
         return mi;

@@ -31,8 +31,8 @@ public class RtmpPacket {
     long messageStreamId;
 
     long absoluteTimestamp;
-    long offset;
-    long payloadLegth;
+    long messageOffset;
+    long chunkOffset;
     long headerLength;
 
     protected RtmpPacket() {
@@ -84,20 +84,20 @@ public class RtmpPacket {
         this.messageType = other.messageType;
         this.messageStreamId = other.messageStreamId;
         this.absoluteTimestamp = other.absoluteTimestamp;
-        this.offset = other.offset;
-        this.payloadLegth = other.payloadLegth;
+        this.messageOffset = other.messageOffset;
+        this.chunkOffset = other.chunkOffset;
         this.headerLength = other.headerLength;
     }
 
     /**
-     * Accounts part of the packet being processed by creating a new packet with modified offset and payloadLength.
+     * Accounts part of the packet being processed by creating a new packet with modified messageOffset and payloadLength.
      * @param byteCount
      * @return
      */
     public RtmpPacket transposed(int byteCount) {
         RtmpPacket result = new RtmpPacket(this);
-        result.offset += byteCount;
-        result.payloadLegth -= byteCount;
+        result.messageOffset += byteCount;
+        result.chunkOffset += byteCount;
         return result;
     }
 
@@ -111,8 +111,9 @@ public class RtmpPacket {
                 ", messageType=" + messageType +
                 ", messageStreamId=" + messageStreamId +
                 ", absoluteTimestamp=" + absoluteTimestamp +
-                ", offset=" + offset +
-                ", payloadLegth=" + payloadLegth +
+                ", messageOffset=" + messageOffset +
+                ", chunkOffset=" + chunkOffset +
+                ", headerLength=" + headerLength +
                 '}';
     }
 }
