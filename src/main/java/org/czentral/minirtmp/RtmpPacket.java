@@ -32,7 +32,6 @@ public class RtmpPacket {
 
     long absoluteTimestamp;
     long messageOffset;
-    long chunkOffset;
     long headerLength;
 
     protected RtmpPacket() {
@@ -76,31 +75,6 @@ public class RtmpPacket {
         return packetTimestamp == 0xffffff;
     }
 
-    private RtmpPacket(RtmpPacket other) {
-        this.chunkType = other.chunkType;
-        this.sid = other.sid;
-        this.packetTimestamp = other.packetTimestamp;
-        this.messageSize = other.messageSize;
-        this.messageType = other.messageType;
-        this.messageStreamId = other.messageStreamId;
-        this.absoluteTimestamp = other.absoluteTimestamp;
-        this.messageOffset = other.messageOffset;
-        this.chunkOffset = other.chunkOffset;
-        this.headerLength = other.headerLength;
-    }
-
-    /**
-     * Accounts part of the packet being processed by creating a new packet with modified messageOffset and payloadLength.
-     * @param byteCount
-     * @return
-     */
-    public RtmpPacket transposed(int byteCount) {
-        RtmpPacket result = new RtmpPacket(this);
-        result.messageOffset += byteCount;
-        result.chunkOffset += byteCount;
-        return result;
-    }
-
     @Override
     public String toString() {
         return "RtmpPacket{" +
@@ -112,7 +86,6 @@ public class RtmpPacket {
                 ", messageStreamId=" + messageStreamId +
                 ", absoluteTimestamp=" + absoluteTimestamp +
                 ", messageOffset=" + messageOffset +
-                ", chunkOffset=" + chunkOffset +
                 ", headerLength=" + headerLength +
                 '}';
     }

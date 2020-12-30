@@ -17,15 +17,11 @@
 
 package org.czentral.minirtmp;
 
-import org.czentral.minihttp.ChunkedInputStream;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-
-import static org.junit.Assert.*;
 
 public class RTMPStreamProcessorTest {
 
@@ -36,14 +32,12 @@ public class RTMPStreamProcessorTest {
         limit.assemblyBufferSize = 200 * 1024;
         limit.chunkStreamCount = 100;
 
-        String pathname = "httpresp.pcap";
+        String pathname = "rtmp-in.pcap";
         byte[] buffer = loadFile(pathname);
-        //int start = 0xc938;
         int start = 0xc5f;
-        //int end = 0xe938;
         int end = 0x16c7 + 0x28;
 
-        for (int i=0xc6b; i<end; i++) {
+        for (int i=start; i<end; i++) {
             TestChunkProcessor cp = new TestChunkProcessor();
             RTMPStreamProcessor o = new RTMPStreamProcessor(limit, cp);
             try {
@@ -60,7 +54,9 @@ public class RTMPStreamProcessorTest {
     }
 
     private byte[] loadFile(String pathname) throws IOException {
-        File file = new File(pathname);
+        //File file = new File(pathname);
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource(pathname).getFile());
         FileInputStream fis = new FileInputStream(file);
         byte[] buffer = new byte[(int)file.length()];
         int offset = 0;

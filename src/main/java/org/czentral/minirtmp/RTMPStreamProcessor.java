@@ -28,8 +28,6 @@ class RTMPStreamProcessor implements Processor {
     
     protected boolean finished = false;
     
-    protected Map<Integer, MessageInfo> lastMessages = new HashMap<Integer, MessageInfo>();
-    
     private final int DEFAULT_CHUNK_SIZE = 128;
     
     protected ResourceLimit limit;
@@ -39,6 +37,7 @@ class RTMPStreamProcessor implements Processor {
     protected RtmpReader reader = new RtmpReader(DEFAULT_CHUNK_SIZE);
 
     protected RtmpPacket lastPacket = null;
+    protected int chunkOffset = 0;
 
     public RTMPStreamProcessor(ResourceLimit limit, ChunkProcessor chunkProcessor) {
         this.limit = limit;
@@ -90,29 +89,21 @@ class RTMPStreamProcessor implements Processor {
         int processed = 0;
 
         ByteBuffer bb = ByteBuffer.wrap(buffer, offset, length);
-        if (lastPacket == null || lastPacket.chunkOffset >= reader.getChunkSize() || lastPacket.messageOffset >= lastPacket.messageSize) {
+        if (lastPacket == null || chunkOffset >= reader.getChunkSize() || lastPacket.messageOffset + chunkOffset >= lastPacket.messageSize) {
             try {
                 Optional<RtmpPacket> op = reader.read(bb);
                 if (!op.isPresent()) {
                     return 0;
                 }
                 lastPacket = op.get();
+                chunkOffset = 0;
                 processed += lastPacket.headerLength;
-                //System.out.println(op.get());
             } catch (RtmpException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
-                //return 0;
             }
         }
-        //if (bb.remaining() < lastPacket.payloadLegth) {
-        //    return 0;
-        //}
 
-        //System.err.println("code: " + code + ", sid: " + sid + ", type: " + type + ", length: " + payloadLength);
-        //System.err.println(HexDump.prettyPrintHex(buffer, bufferOffset, sidLength + headLength + payloadLength));
-        //System.err.println(HexDump.prettyPrintHex(buffer, bufferOffset, Math.min(16, sidLength + headLength + payloadLength)));
-        
         // change chunk size command processed
         if (lastPacket.messageType == 0x01) {
             if (bb.remaining() < 4) {
@@ -125,30 +116,24 @@ class RTMPStreamProcessor implements Processor {
             reader.setChunkSize(newChunkSize);
         }
 
-        //chunkProcessor.processChunk(lastMessage, buffer, readOffset, payloadLength);
-        //MessageInfo messageInfo = buildInfo(p);
-        int chunkRemaining = (int)Math.min(lastPacket.messageSize-lastPacket.messageOffset, reader.getChunkSize() - lastPacket.chunkOffset);
+        int chunkRemaining = (int)Math.min(lastPacket.messageSize-(lastPacket.messageOffset+chunkOffset), reader.getChunkSize() - chunkOffset);
         int byteCount = Math.min(chunkRemaining, bb.remaining());
         if (byteCount > 0) {
-            chunkProcessor.processChunk(buildInfo(lastPacket), bb.array(), bb.position(), byteCount);
+            chunkProcessor.processChunk(buildInfo(lastPacket, chunkOffset), bb.array(), bb.position(), byteCount);
 
             finished = !chunkProcessor.alive();
 
-            lastPacket = lastPacket.transposed(byteCount);
+            chunkOffset += byteCount;
 
             processed += byteCount;
         }
 
-        //System.out.printf("len: %d, newLen: %d%n", sidLength + headLength + payloadLength, p.messageSize + p.headerLength);
-        //return sidLength + headLength + payloadLength;
-        //System.out.printf("len: %d, newLen: %d (%d + %d)%n", sidLength + headLength + payloadLength, p.headerLength + p.payloadLegth, p.headerLength, p.payloadLegth);
         return processed;
     }
 
-    private MessageInfo buildInfo(RtmpPacket p) {
+    private static MessageInfo buildInfo(RtmpPacket p, int chunkOffset) {
         MessageInfo mi = new MessageInfo(p.sid, p.messageType, (int)p.messageSize);
-        mi.offset = (int)p.messageOffset;
-        mi.length = (int)p.messageSize;
+        mi.offset = (int)p.messageOffset + chunkOffset;
         mi.calculatedTimestamp = p.absoluteTimestamp;
         return mi;
     }
