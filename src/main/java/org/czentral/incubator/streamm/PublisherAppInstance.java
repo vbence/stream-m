@@ -38,7 +38,13 @@ import org.czentral.util.stream.TimeInstant;
  * @author Varga Bence
  */
 class PublisherAppInstance implements ApplicationInstance {
-    
+
+    private final int AAC_PACKET_SEQUENCE_HEADER = 0;
+    private final int AAC_PACKET_RAW = 1;
+
+    private static final int[] SAMPLE_FREQUENCIES = {96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350, 0, 0};
+    private static final int[] SAMPLE_SIZES = {8, 16};
+
     private static final String HANDLER_NAME_SET_DATA_FRAME = "@setDataFrame";
     
     private static final int VIDEO_TIMESCALE_MULTIPLIER = 1000;
@@ -338,10 +344,11 @@ class PublisherAppInstance implements ApplicationInstance {
                         | (decoderSpecificBytes[3] & 0xff);
                 codecDescription += (codecDescription.length() > 0 ? "," : "")
                         + "avc1." + Integer.toHexString(0x1000000 | codecConfig).substring(1);
-                
+
                 int timescale = metaData.get("framerate") != null
                         ? ((Double)metaData.get("framerate")).intValue() * VIDEO_TIMESCALE_MULTIPLIER
                         : 30 * VIDEO_TIMESCALE_MULTIPLIER;
+                //int timescale = 1000;
                 int newTrackID = header.addVideoTrack(((Double)metaData.get("width")).intValue()
                         , ((Double)metaData.get("height")).intValue()
                         , timescale
@@ -352,26 +359,35 @@ class PublisherAppInstance implements ApplicationInstance {
                 
             } else if (mi.type == 0x08) {
                 final int SKIP_BYTES = 2;
-                byte[] decoderSpecificBytes = new byte[payloadLength - SKIP_BYTES];
-                System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, decoderSpecificBytes, 0, payloadLength - SKIP_BYTES);
-                
+                byte[] audioSpecificConfig = new byte[payloadLength - SKIP_BYTES];
+                System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, audioSpecificConfig, 0, payloadLength - SKIP_BYTES);
+
+                BitBuffer acBuffer = new BitBuffer(readBuffer, (payloadOffset) << 3, (payloadLength) << 3);
+                int format = (int)acBuffer.getBits(4);
+                int flvSampleRate = (int)acBuffer.getBits(2);
+                int sampleSize = SAMPLE_SIZES[(int)acBuffer.getBits(1)];
+                int channels = (int)acBuffer.getBits(1);
+                int aacPacketType = (int)acBuffer.getBits(8);
+
                 // AOT is in decimal
-                int audioObjectType = (decoderSpecificBytes[0] & 0xff) >> 3;
+                int audioObjectType = (int)acBuffer.getBits(5);
                 if (audioObjectType == 31) {
-                    audioObjectType = ( (decoderSpecificBytes[0] & 0x07) << 3
-                            | (decoderSpecificBytes[1] & 0xe0) >> 5 )
-                            + 31;
+                    audioObjectType = 32 + (int)acBuffer.getBits(6);
                 }
+
+                int sfi = (int)acBuffer.getBits(4);
+                int sampleRate = (sfi != 0xf) ? SAMPLE_FREQUENCIES[sfi] : (int)acBuffer.getBits(24);
+
                 codecDescription += (codecDescription.length() > 0 ? "," : "")
                         + "mp4a." + Integer.toHexString(0x100 | DecoderConfigDescriptor.PROFILE_AAC_MAIN).substring(1)
                         + "." + audioObjectType;
 
-                int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
-                int audioSampleSize = metaData.containsKey("audiosamplesize") ? ((Double)metaData.get("audiosamplesize")).intValue() : 16;
-                int newTrackID = header.addAudioTrack(((Double)metaData.get("audiosamplerate")).intValue()
-                        , audioSampleSize
+                //int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
+                int timescale = sampleRate;
+                int newTrackID = header.addAudioTrack(sampleRate
+                        , sampleSize
                         , ((Double)metaData.get("audiodatarate")).intValue()
-                        , decoderSpecificBytes);
+                        , audioSpecificConfig);
                 
                 trackInfo = new TrackInfo(newTrackID, TrackInfo.Type.AUDIO, timescale);
                 streamToTrack.put(trackId, trackInfo);
@@ -448,25 +464,37 @@ class PublisherAppInstance implements ApplicationInstance {
                     System.out.println("NAL size mismatch! ns: " + nalSize + ", pls: " + (payloadLength - SKIP_BYTES));
                 }
             } */
-            
-            builder.addFrame(trackInfo.trackID, (int)(compositionTime * trackInfo.timing.getTicksPerSecond() / 1000 / VIDEO_TIMESCALE_MULTIPLIER + 0.5) * VIDEO_TIMESCALE_MULTIPLIER, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
-            //System.out.printf("v (%d) %d %d: %d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, trackInfo.timing.getMillis() - mi.calculatedTimestamp);
 
-            trackInfo.timing = trackInfo.timing.transposed(VIDEO_TIMESCALE_MULTIPLIER);
+            int timeOffset = (int)(compositionTime * trackInfo.timing.getTicksPerSecond() / 1000 / VIDEO_TIMESCALE_MULTIPLIER + 0.5) * VIDEO_TIMESCALE_MULTIPLIER;
+            //builder.addFrame(trackInfo.trackID, timeOffset, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+            trackInfo.timing = new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000);
+            builder.addFrame(trackInfo.trackID, timeOffset, trackInfo.timing, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+            //System.err.printf("v (%d) %d %d: %d/%d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, compositionTime, timeOffset);
+
 
         } else if (mi.type == 0x08) {
-            
-            final int SKIP_BYTES = 2;
-            builder.addFrame(trackInfo.trackID, 0, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
 
-            //System.out.printf("a (%d) %d %d: %d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, trackInfo.timing.getMillis() - mi.calculatedTimestamp);
-            /*
-            if (Math.abs(trackInfo.timeMs - mi.calculatedTimestamp) > MAX_DRIFT_MS) {
-                throw new RuntimeException("RTMP timestamps diverged from estimation.");
+            BitBuffer acBuffer = new BitBuffer(readBuffer, (payloadOffset) << 3, (payloadLength) << 3);
+            int format = (int)acBuffer.getBits(4);
+            int flvSampleRate = (int)acBuffer.getBits(2);
+            int sampleSize = SAMPLE_SIZES[(int)acBuffer.getBits(1)];
+            int channels = (int)acBuffer.getBits(1);
+            int aacPacketType = (int)acBuffer.getBits(8);
+
+            if (aacPacketType == AAC_PACKET_RAW) {
+                final int SKIP_BYTES = 2;
+                //builder.addFrame(trackInfo.trackID, 0, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+                builder.addFrame(trackInfo.trackID, 0, trackInfo.timing, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
+
+                //System.out.printf("a (%d) %d %d: %d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, trackInfo.timing.getMillis() - mi.calculatedTimestamp);
+                /*
+                if (Math.abs(trackInfo.timeMs - mi.calculatedTimestamp) > MAX_DRIFT_MS) {
+                    throw new RuntimeException("RTMP timestamps diverged from estimation.");
+                }
+                */
+
+                trackInfo.timing = trackInfo.timing.transposed(1024);
             }
-            */
-
-            trackInfo.timing = trackInfo.timing.transposed(1024);
         }
         
         //HexDump.displayHex(readBuffer, payloadOffset, Math.min(payloadLength, 32));

@@ -61,6 +61,24 @@ public class BitBuffer {
     
     public void moveBitPosition(long bits) {
         bitPosition += bits;
-    }    
+    }
+
+    public long getBits(int count) {
+        long value = 0;
+        long needed = count;
+        while (needed > 0) {
+            long got = 8 - (bitOffset & 7);
+            long read = Math.min(needed, got);
+            long bits = (buffer[(int)(bitOffset >> 3)] >> (got - read));
+            long mask = ((1 << read) - 1);
+            long maskedBits = bits & mask;
+            value <<= read;
+            value |= maskedBits;
+
+            needed -= read;
+            bitOffset += read;
+        }
+        return value;
+    }
     
 }
