@@ -470,6 +470,11 @@ class PublisherAppInstance implements ApplicationInstance {
                 //builder.addFrame(trackInfo.trackID, 0, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
                 builder.addFrame(trackInfo.trackID, 0, trackInfo.timing, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
 
+                long timeDiff = trackInfo.timing.getMillis() - mi.calculatedTimestamp;
+                if (timeDiff > 1) {
+                    System.out.printf("AAC timing diff: %d%n", timeDiff);
+                }
+
                 //System.out.printf("a (%d) %d %d: %d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, trackInfo.timing.getMillis() - mi.calculatedTimestamp);
                 /*
                 if (Math.abs(trackInfo.timeMs - mi.calculatedTimestamp) > MAX_DRIFT_MS) {
