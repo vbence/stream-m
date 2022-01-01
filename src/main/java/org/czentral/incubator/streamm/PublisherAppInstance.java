@@ -86,6 +86,8 @@ class PublisherAppInstance implements ApplicationInstance {
     protected Mp4FragmentBuilder builder;
     
     protected int fragmentSequence = 1;
+
+    protected int audioTrackId = -1;
     
     
     public PublisherAppInstance(Properties props, Map<String, ControlledStream> streams, Serializer serializer) {
@@ -352,6 +354,10 @@ class PublisherAppInstance implements ApplicationInstance {
                 streamToTrack.put(trackId, trackInfo);
                 
             } else if (mi.type == 0x08) {
+
+                if (audioTrackId == -1) {
+                    audioTrackId = trackId;
+                }
                 final int SKIP_BYTES = 2;
                 byte[] audioSpecificConfig = new byte[payloadLength - SKIP_BYTES];
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, audioSpecificConfig, 0, payloadLength - SKIP_BYTES);
@@ -405,6 +411,11 @@ class PublisherAppInstance implements ApplicationInstance {
         // create builder if none exists
         if (builder == null) {
             builder = new Mp4FragmentBuilder(fragmentSequence++, mi.calculatedTimestamp);
+
+            if (audioTrackId != -1){
+                long diffMs = mi.calculatedTimestamp - streamToTrack.get(audioTrackId).timing.getMillis();
+                System.out.printf("diffMs: %d%n", diffMs);
+            }
             //System.out.println("---");
         }
 
