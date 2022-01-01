@@ -39,12 +39,6 @@ import org.czentral.util.stream.TimeInstant;
  */
 class PublisherAppInstance implements ApplicationInstance {
 
-    private final int AAC_PACKET_SEQUENCE_HEADER = 0;
-    private final int AAC_PACKET_RAW = 1;
-
-    private static final int[] SAMPLE_FREQUENCIES = {96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350, 0, 0};
-    private static final int[] SAMPLE_SIZES = {8, 16};
-
     private static final String HANDLER_NAME_SET_DATA_FRAME = "@setDataFrame";
     
     private static final int VIDEO_TIMESCALE_MULTIPLIER = 1000;
@@ -306,7 +300,7 @@ class PublisherAppInstance implements ApplicationInstance {
             //System.out.println("csid: " + mi.chunkStreamID);
             
             if (streamStarted) {
-                throw new RuntimeException("Unexpected media (frame in an unanounced stream).");
+                throw new RuntimeException("Unexpected media (frame in an unannounced stream).");
             }
             
             if (mi.type == 0x09) {
@@ -363,24 +357,17 @@ class PublisherAppInstance implements ApplicationInstance {
                 System.arraycopy(readBuffer, payloadOffset + SKIP_BYTES, audioSpecificConfig, 0, payloadLength - SKIP_BYTES);
 
                 BitBuffer acBuffer = new BitBuffer(readBuffer, (payloadOffset) << 3, (payloadLength) << 3);
-                int format = (int)acBuffer.getBits(4);
-                int flvSampleRate = (int)acBuffer.getBits(2);
-                int sampleSize = SAMPLE_SIZES[(int)acBuffer.getBits(1)];
-                int channels = (int)acBuffer.getBits(1);
-                int aacPacketType = (int)acBuffer.getBits(8);
+                FlvAudioMetadata meta = FlvAudioMetadata.read(acBuffer);
+                AudioData ac = AudioData.read(acBuffer);
+                int sampleSize = meta.getAudioData().getSampleSizeBits();
 
-                // AOT is in decimal
-                int audioObjectType = (int)acBuffer.getBits(5);
-                if (audioObjectType == 31) {
-                    audioObjectType = 32 + (int)acBuffer.getBits(6);
-                }
+                //int sfi = (int)acBuffer.getBits(4);
+                //int sampleRate = (sfi != 0xf) ? SAMPLE_FREQUENCIES[sfi] : (int)acBuffer.getBits(24);
+                int sampleRate = meta.getAacAudioData().getSampleRate();
 
-                int sfi = (int)acBuffer.getBits(4);
-                int sampleRate = (sfi != 0xf) ? SAMPLE_FREQUENCIES[sfi] : (int)acBuffer.getBits(24);
-
-                codecDescription += (codecDescription.length() > 0 ? "," : "")
+                        codecDescription += (codecDescription.length() > 0 ? "," : "")
                         + "mp4a." + Integer.toHexString(0x100 | DecoderConfigDescriptor.PROFILE_AAC_MAIN).substring(1)
-                        + "." + audioObjectType;
+                        + "." + meta.getAacAudioData().getAudioObjectType();
 
                 //int timescale = ((Double)metaData.get("audiosamplerate")).intValue();
                 int timescale = sampleRate;
@@ -475,13 +462,10 @@ class PublisherAppInstance implements ApplicationInstance {
         } else if (mi.type == 0x08) {
 
             BitBuffer acBuffer = new BitBuffer(readBuffer, (payloadOffset) << 3, (payloadLength) << 3);
-            int format = (int)acBuffer.getBits(4);
-            int flvSampleRate = (int)acBuffer.getBits(2);
-            int sampleSize = SAMPLE_SIZES[(int)acBuffer.getBits(1)];
-            int channels = (int)acBuffer.getBits(1);
-            int aacPacketType = (int)acBuffer.getBits(8);
+            FlvAudioMetadata meta = FlvAudioMetadata.read(acBuffer);
+            int aacPacketType = meta.getAacAudioData().getAacPacketType();
 
-            if (aacPacketType == AAC_PACKET_RAW) {
+            if (aacPacketType == AacAudioData.AAC_PACKET_RAW) {
                 final int SKIP_BYTES = 2;
                 //builder.addFrame(trackInfo.trackID, 0, new TimeInstant(trackInfo.timing.getTicksPerSecond(), mi.calculatedTimestamp * trackInfo.timing.getTicksPerSecond() / 1000), readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
                 builder.addFrame(trackInfo.trackID, 0, trackInfo.timing, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
@@ -500,7 +484,7 @@ class PublisherAppInstance implements ApplicationInstance {
         //HexDump.displayHex(readBuffer, payloadOffset, Math.min(payloadLength, 32));
         //System.out.println("at: " + mi.absoluteTimestamp + ", rt: " + mi.relativeTimestamp);
     }
-    
+
     private void startStream() {
         streamStarted = true;
         
@@ -558,5 +542,136 @@ class PublisherAppInstance implements ApplicationInstance {
         }
 
     }
-    
+
+    public static class AudioData {
+
+        private static final int FORMAT_AAC = 10;
+
+        private static final int[] SAMPLE_SIZES = {8, 16};
+        private static final int[] SOUND_RATES = {5500, 11025, 22050, 44100};
+
+        private int soundFormat;
+        private int soundRateIndex;
+        private int sampleRateHz;
+        private int soundSizeIndex;
+        private int sampleSizeBits;
+        private int soundType;
+
+        protected AudioData() {
+        }
+
+        public static AudioData read(BitBuffer acBuffer) {
+            AudioData result = new AudioData();
+            result.soundFormat = (int)acBuffer.getBits(4);
+            result.soundRateIndex = (int)acBuffer.getBits(2);
+            result.sampleRateHz = SOUND_RATES[result.soundRateIndex];
+            result.soundSizeIndex = (int)acBuffer.getBits(1);
+            result.sampleSizeBits = SAMPLE_SIZES[result.soundSizeIndex];
+            result.soundType = (int)acBuffer.getBits(1);
+
+            return result;
+        }
+
+        public int getSoundFormat() {
+            return soundFormat;
+        }
+
+        public int getSoundRateIndex() {
+            return soundRateIndex;
+        }
+
+        public int getSampleRateHz() {
+            return sampleRateHz;
+        }
+
+        public int getSoundSizeIndex() {
+            return soundSizeIndex;
+        }
+
+        public int getSampleSizeBits() {
+            return sampleSizeBits;
+        }
+
+        public int getSoundType() {
+            return soundType;
+        }
+    }
+
+    public static class AacAudioData {
+        public static final int AAC_PACKET_SEQUENCE_HEADER = 0;
+        public static final int AAC_PACKET_RAW = 1;
+
+        private static final int[] SAMPLE_FREQUENCIES = {96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350, 0, 0};
+
+        private int aacPacketType;
+
+        private int audioObjectType;
+        private int sampleRate;
+        private int channelConfiguration;
+
+        protected AacAudioData() {
+        }
+
+        public static AacAudioData read(BitBuffer buffer) {
+            AacAudioData result = new AacAudioData();
+            result.aacPacketType = (int)buffer.getBits(8);
+
+            // AOT is in decimal
+            int aotLow = (int)buffer.getBits(5);
+            if (aotLow == 31) {
+                result.audioObjectType = 32 + (int)buffer.getBits(6);
+            } else {
+                result.audioObjectType = aotLow;
+            }
+
+            int sfi = (int)buffer.getBits(4);
+            result.sampleRate = (sfi != 0xf) ? SAMPLE_FREQUENCIES[sfi] : (int)buffer.getBits(24);
+
+            result.channelConfiguration = (int)buffer.getBits(4);
+
+            return result;
+        }
+
+        public int getAacPacketType() {
+            return aacPacketType;
+        }
+
+        public int getAudioObjectType() {
+            return audioObjectType;
+        }
+
+        public int getSampleRate() {
+            return sampleRate;
+        }
+
+        public int getChannelConfiguration() {
+            return channelConfiguration;
+        }
+    }
+
+    public static class FlvAudioMetadata {
+        AudioData audioData;
+        AacAudioData aacAudioData;
+
+        protected FlvAudioMetadata() {
+        }
+
+        public static FlvAudioMetadata read(BitBuffer buffer) {
+            FlvAudioMetadata result = new FlvAudioMetadata();
+            result.audioData = AudioData.read(buffer);
+            if (result.audioData.getSoundFormat() == AudioData.FORMAT_AAC) {
+                result.aacAudioData = AacAudioData.read(buffer);
+            }
+            return result;
+        }
+
+        public AudioData getAudioData() {
+            return audioData;
+        }
+
+        public AacAudioData getAacAudioData() {
+            return aacAudioData;
+        }
+    }
+
 }
