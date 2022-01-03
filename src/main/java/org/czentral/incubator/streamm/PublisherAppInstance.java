@@ -482,7 +482,7 @@ class PublisherAppInstance implements ApplicationInstance {
                 builder.addFrame(trackInfo.trackID, 0, trackInfo.timing, readBuffer, payloadOffset + SKIP_BYTES, payloadLength - SKIP_BYTES);
 
                 long timeDiff = trackInfo.timing.getMillis() - mi.calculatedTimestamp;
-                if (timeDiff > 1) {
+                if (Math.abs(timeDiff) > 1) {
                     System.out.printf("AAC timing diff: %d%n", timeDiff);
                 }
 
