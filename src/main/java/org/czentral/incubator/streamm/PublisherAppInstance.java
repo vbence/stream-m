@@ -18,9 +18,11 @@
 package org.czentral.incubator.streamm;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.*;
+
 import org.czentral.data.binary.AnnotationMapSerializationContext;
 import org.czentral.data.binary.BitBuffer;
 import org.czentral.data.binary.Serializer;
@@ -88,6 +90,8 @@ class PublisherAppInstance implements ApplicationInstance {
     protected int fragmentSequence = 1;
 
     protected int audioTrackId = -1;
+
+    protected LastSecondStats lastSecondStats;
     
     
     public PublisherAppInstance(Properties props, Map<String, ControlledStream> streams, Serializer serializer) {
@@ -487,8 +491,12 @@ class PublisherAppInstance implements ApplicationInstance {
 
                 long timeDiff = trackInfo.timing.getMillis() - mi.calculatedTimestamp;
                 if (Math.abs(timeDiff) > 1) {
-                    System.out.printf("AAC timing diff: %d%n", timeDiff);
+                    if (lastSecondStats == null){
+                        lastSecondStats = new LastSecondStats();
+                    }
+                    lastSecondStats.addNewAacTimingInfo(timeDiff);
                 }
+
 
                 //System.out.printf("a (%d) %d %d: %d%n", mi.length, trackInfo.timing.getMillis(), mi.calculatedTimestamp, trackInfo.timing.getMillis() - mi.calculatedTimestamp);
                 /*
@@ -691,6 +699,50 @@ class PublisherAppInstance implements ApplicationInstance {
 
         public AacAudioData getAacAudioData() {
             return aacAudioData;
+        }
+    }
+
+    public static class LastSecondStats {
+        List<Long> pastTimeDiffs;
+        LocalDateTime firstInstantForSecond;
+
+        public void addNewAacTimingInfo(long timeDiff) {
+            LocalDateTime now = LocalDateTime.now();
+            if (firstInstantForSecond == null){
+                firstInstantForSecond = now;
+                pastTimeDiffs = new ArrayList<>();
+            } else {
+                if (firstInstantForSecond.plusSeconds(1).isBefore(now)){
+                    calculateStatsAndPrint();
+                    pastTimeDiffs = new ArrayList<>();
+                    firstInstantForSecond = now;
+                } else {
+                    pastTimeDiffs.add(timeDiff);
+                }
+            }
+        }
+
+        private void calculateStatsAndPrint() {
+            if (pastTimeDiffs.isEmpty()) {
+                return;
+            }
+            long maxDiff = pastTimeDiffs.get(0);
+            long minDiff = pastTimeDiffs.get(0);
+            long sumDiff = 0L;
+
+            for (Long timeDiff : pastTimeDiffs){
+                sumDiff += timeDiff;
+                if (timeDiff > maxDiff) {
+                    maxDiff = timeDiff;
+                }
+                if (timeDiff < minDiff) {
+                    minDiff = timeDiff;
+                }
+            }
+            System.out.println("AAC timing diff for " + DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                    .format(firstInstantForSecond) + " maxDiff:" + maxDiff + " minDiff:" + minDiff
+                    + " avgDiff:" + (double)sumDiff / pastTimeDiffs.size());
+
         }
     }
 
