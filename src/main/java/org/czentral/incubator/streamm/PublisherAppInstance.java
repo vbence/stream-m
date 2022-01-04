@@ -413,8 +413,12 @@ class PublisherAppInstance implements ApplicationInstance {
             builder = new Mp4FragmentBuilder(fragmentSequence++, mi.calculatedTimestamp);
 
             if (audioTrackId != -1){
-                long diffMs = mi.calculatedTimestamp - streamToTrack.get(audioTrackId).timing.getMillis();
-                System.out.printf("diffMs: %d%n", diffMs);
+                TimeInstant audioTiming = streamToTrack.get(audioTrackId).timing;
+                long diffMs = audioTiming.getMillis() - mi.calculatedTimestamp;
+                // Warn if diff is greater than an audio frame's time
+                if (Math.abs(diffMs) > 1000 * 1024 / audioTiming.getTicksPerSecond()) {
+                    System.out.printf("diffMs: %d%n", diffMs);
+                }
             }
             //System.out.println("---");
         }
