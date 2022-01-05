@@ -35,7 +35,7 @@ jobs:
     - script: ./gradlew check --stacktrace
       jdk: oraclejdk9
     - script: ./gradlew check --stacktrace
-      jdk: oraclejdk14
+      jdk: oraclejdk17
     - stage: GitHub Release
       jdk: oraclejdk9
       script:
